@@ -1,3 +1,9 @@
+python3.11 (3.11.0~a0-32-g985ac01637-1+bionic1) bionic; urgency=medium
+
+  * Update to v3.11.0a0-32-g985ac01637 (2021-05-05).
+
+ -- Anthony Sottile <asottile@umich.edu>  Wed, 05 May 2021 20:47:36 -0700
+
 python3.10 (3.10.0~b1-23-gce4fee210b-1+bionic1) bionic; urgency=medium
 
   * Update to v3.10.0b1-23-gce4fee210b (2021-05-05).
