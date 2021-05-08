@@ -47,7 +47,7 @@
 
 This article explains the new features in Python 3.11, compared to 3.10.
 
-For full details, see the :source:`Misc/NEWS` file.
+For full details, see the :ref:`changelog <changelog>`.
 
 .. note::
 
@@ -91,10 +91,12 @@ Optimizations
 =============
 
 
+
+
 Build and C API Changes
 =======================
 
-
+* :c:func:`PyFrame_BlockSetup` and :c:func:`PyFrame_BlockPop` have been removed.
 
 Deprecated
 ==========
