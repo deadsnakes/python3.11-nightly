@@ -40,7 +40,7 @@ index 2d1150f..0965632 100644
          srcdir = _CONFIG_VARS.get('srcdir', _PROJECT_BASE)
          if os.name == 'posix':
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index e6859d4..f811e10 100644
+index e58f26d..3daa6cb 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -819,6 +819,7 @@ Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posix
@@ -59,4 +59,4 @@ index e6859d4..f811e10 100644
 +LIBPC=		$(LIBDIR)/$(MULTIARCH)/pkgconfig
  
  libainstall:	@DEF_MAKE_RULE@ python-config
- 	@for i in $(LIBDIR) $(LIBPL) $(LIBPC); \
+ 	@for i in $(LIBDIR) $(LIBPL) $(LIBPC) $(BINDIR); \
