@@ -307,10 +307,10 @@ index e8869af..2d1150f 100644
  
  
 diff --git a/Lib/test/test_site.py b/Lib/test/test_site.py
-index 9b4ab42..1c556a0 100644
+index fa74e77..5baf274 100644
 --- a/Lib/test/test_site.py
 +++ b/Lib/test/test_site.py
-@@ -282,16 +282,16 @@ def test_getsitepackages(self):
+@@ -284,16 +284,16 @@ def test_getsitepackages(self):
          if os.sep == '/':
              # OS X, Linux, FreeBSD, etc
              if sys.platlibdir != "lib":
