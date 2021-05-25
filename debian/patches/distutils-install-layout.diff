@@ -9,7 +9,7 @@ Subject: distutils-install-layout
 # DP: - installs into $prefix/dist-packages instead of $prefix/site-packages.
 # DP: - doesn't encode the python version into the egg name.
 ---
- Lib/distutils/command/install.py          | 33 +++++++++++++++++++++++++++++--
+ Lib/distutils/command/install.py          | 33 ++++++++++++++++++++++++++++---
  Lib/distutils/command/install_egg_info.py | 30 +++++++++++++++++++++++-----
  Lib/distutils/sysconfig.py                |  7 +++++++
  Lib/distutils/tests/test_bdist_dumb.py    |  2 +-
@@ -18,13 +18,13 @@ Subject: distutils-install-layout
  Lib/site.py                               | 26 +++++++++++++++++++-----
  Lib/sysconfig.py                          | 20 +++++++++++++++++++
  Lib/test/test_site.py                     |  6 +++---
- 9 files changed, 111 insertions(+), 18 deletions(-)
+ 9 files changed, 110 insertions(+), 19 deletions(-)
 
 diff --git a/Lib/distutils/command/install.py b/Lib/distutils/command/install.py
-index d33a889..0acf6e6 100644
+index 26696cf..b3f926c 100644
 --- a/Lib/distutils/command/install.py
 +++ b/Lib/distutils/command/install.py
-@@ -33,7 +33,7 @@
+@@ -33,13 +33,13 @@
  # alter locations for packages installations in a single place.
  # Note that this module is depracated (PEP 632); all consumers
  # of this information should switch to using sysconfig directly.
@@ -33,16 +33,14 @@ index d33a889..0acf6e6 100644
  
  # Copy from sysconfig._INSTALL_SCHEMES
  for key in SCHEME_KEYS:
-@@ -43,6 +43,8 @@
-     INSTALL_SCHEMES["unix_prefix"][key] = sysconfig._INSTALL_SCHEMES["posix_prefix"][sys_key]
-     INSTALL_SCHEMES["unix_home"][key] = sysconfig._INSTALL_SCHEMES["posix_home"][sys_key]
-     INSTALL_SCHEMES["nt"][key] = sysconfig._INSTALL_SCHEMES["nt"][sys_key]
-+    INSTALL_SCHEMES["unix_local"][key] = sysconfig._INSTALL_SCHEMES["unix_local"][sys_key]
-+    INSTALL_SCHEMES["deb_system"][key] = sysconfig._INSTALL_SCHEMES["deb_system"][sys_key]
- 
- # Transformation to different template format
- for main_key in INSTALL_SCHEMES:
-@@ -141,6 +143,9 @@ class install(Command):
+     for distutils_scheme_name, sys_scheme_name in (
+             ("unix_prefix", "posix_prefix"), ("unix_home", "posix_home"),
+-            ("nt", "nt")):
++            ("nt", "nt"), ("unix_local", "unix_local"), ("deb_system", "deb_system")):
+         sys_key = key
+         sys_scheme = sysconfig._INSTALL_SCHEMES[sys_scheme_name]
+         if key == "headers" and key not in sys_scheme:
+@@ -148,6 +148,9 @@ class install(Command):
  
          ('record=', None,
           "filename in which to record list of installed files"),
@@ -52,7 +50,7 @@ index d33a889..0acf6e6 100644
          ]
  
      boolean_options = ['compile', 'force', 'skip-build']
-@@ -161,6 +166,7 @@ def initialize_options(self):
+@@ -168,6 +171,7 @@ def initialize_options(self):
          self.exec_prefix = None
          self.home = None
          self.user = 0
@@ -60,7 +58,7 @@ index d33a889..0acf6e6 100644
  
          # These select only the installation base; it's up to the user to
          # specify the installation scheme (currently, that means supplying
-@@ -183,6 +189,9 @@ def initialize_options(self):
+@@ -190,6 +194,9 @@ def initialize_options(self):
              self.install_userbase = USER_BASE
              self.install_usersite = USER_SITE
  
@@ -70,7 +68,7 @@ index d33a889..0acf6e6 100644
          self.compile = None
          self.optimize = None
  
-@@ -426,6 +435,7 @@ def finalize_unix(self):
+@@ -436,6 +443,7 @@ def finalize_unix(self):
              self.install_base = self.install_platbase = self.home
              self.select_scheme("unix_home")
          else:
@@ -78,7 +76,7 @@ index d33a889..0acf6e6 100644
              if self.prefix is None:
                  if self.exec_prefix is not None:
                      raise DistutilsOptionError(
-@@ -440,7 +450,26 @@ def finalize_unix(self):
+@@ -450,7 +458,26 @@ def finalize_unix(self):
  
              self.install_base = self.prefix
              self.install_platbase = self.exec_prefix
@@ -276,7 +274,7 @@ index 939893e..0fb8a3f 100644
              sitepackages.append(prefix)
  
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index e8869af..2d1150f 100644
+index 730d33d..25f2276 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
 @@ -56,6 +56,26 @@
