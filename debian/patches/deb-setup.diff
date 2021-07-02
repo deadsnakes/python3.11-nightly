@@ -9,10 +9,10 @@ Subject: deb-setup
  1 file changed, 5 insertions(+), 8 deletions(-)
 
 diff --git a/setup.py b/setup.py
-index ce71a96..fd08983 100644
+index bc2ea16..5d90e0d 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -454,8 +454,10 @@ def set_compiler_executables(self):
+@@ -461,8 +461,10 @@ def set_compiler_executables(self):
          # unfortunately, distutils doesn't let us provide separate C and C++
          # compilers
          if compiler is not None:
@@ -25,7 +25,7 @@ index ce71a96..fd08983 100644
          self.compiler.set_executables(**args)
  
      def build_extensions(self):
-@@ -797,12 +799,7 @@ def add_ldflags_cppflags(self):
+@@ -804,12 +806,7 @@ def add_ldflags_cppflags(self):
                          add_dir_to_list(dir_list, directory)
  
      def configure_compiler(self):
