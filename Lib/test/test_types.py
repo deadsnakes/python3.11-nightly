@@ -18,6 +18,11 @@ class Example:
 
 class Forward: ...
 
+def clear_typing_caches():
+    for f in typing._cleanups:
+        f()
+
+
 class TypesTests(unittest.TestCase):
 
     def test_truth_values(self):
@@ -623,7 +628,7 @@ class TypesTests(unittest.TestCase):
         self.assertEqual(None | typing.List[int], typing.Union[None, typing.List[int]])
         self.assertEqual(str | float | int | complex | int, (int | str) | (float | complex))
         self.assertEqual(typing.Union[str, int, typing.List[int]], str | int | typing.List[int])
-        self.assertEqual(int | int, int)
+        self.assertIs(int | int, int)
         self.assertEqual(
             BaseException |
             bool |
@@ -651,6 +656,8 @@ class TypesTests(unittest.TestCase):
             3 | int
         with self.assertRaises(TypeError):
             Example() | int
+        x = int | str
+        self.assertNotEqual(x, {})
         with self.assertRaises(TypeError):
             (int | str) < typing.Union[str, int]
         with self.assertRaises(TypeError):
@@ -704,13 +711,38 @@ class TypesTests(unittest.TestCase):
         TV = typing.TypeVar('T')
         assert TV | str == typing.Union[TV, str]
         assert str | TV == typing.Union[str, TV]
+        self.assertIs((int | TV)[int], int)
+        self.assertIs((TV | int)[int], int)
 
     def test_union_args(self):
-        self.assertEqual((int | str).__args__, (int, str))
-        self.assertEqual(((int | str) | list).__args__, (int, str, list))
-        self.assertEqual((int | (str | list)).__args__, (int, str, list))
-        self.assertEqual((int | None).__args__, (int, type(None)))
-        self.assertEqual((int | type(None)).__args__, (int, type(None)))
+        def check(arg, expected):
+            clear_typing_caches()
+            self.assertEqual(arg.__args__, expected)
+
+        check(int | str, (int, str))
+        check((int | str) | list, (int, str, list))
+        check(int | (str | list), (int, str, list))
+        check((int | str) | int, (int, str))
+        check(int | (str | int), (int, str))
+        check((int | str) | (str | int), (int, str))
+        check(typing.Union[int, str] | list, (int, str, list))
+        check(int | typing.Union[str, list], (int, str, list))
+        check((int | str) | (list | int), (int, str, list))
+        check((int | str) | typing.Union[list, int], (int, str, list))
+        check(typing.Union[int, str] | (list | int), (int, str, list))
+        check((str | int) | (int | list), (str, int, list))
+        check((str | int) | typing.Union[int, list], (str, int, list))
+        check(typing.Union[str, int] | (int | list), (str, int, list))
+        check(int | type(None), (int, type(None)))
+        check(type(None) | int, (type(None), int))
+
+        args = (int, list[int], typing.List[int],
+                typing.Tuple[int, int], typing.Callable[[int], int],
+                typing.Hashable, typing.TypeVar('T'))
+        for x in args:
+            with self.subTest(x):
+                check(x | None, (x, type(None)))
+                check(None | x, (type(None), x))
 
     def test_union_parameter_chaining(self):
         T = typing.TypeVar("T")
@@ -721,6 +753,7 @@ class TypesTests(unittest.TestCase):
         self.assertEqual(list[int | list[T]][str], list[int | list[str]])
         self.assertEqual((list[T] | list[S]).__parameters__, (T, S))
         self.assertEqual((list[T] | list[S])[int, T], list[int] | list[T])
+        self.assertEqual((list[T] | list[S])[int, int], list[int])
 
     def test_or_type_operator_with_forward(self):
         T = typing.TypeVar('T')
