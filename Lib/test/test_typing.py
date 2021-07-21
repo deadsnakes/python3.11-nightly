@@ -3691,6 +3691,29 @@ class NewTypeTests(BaseTestCase):
             class D(UserName):
                 pass
 
+    def test_or(self):
+        UserId = NewType('UserId', int)
+        UserName = NewType('UserName', str)
+
+        for cls in (int, UserName):
+            with self.subTest(cls=cls):
+                self.assertEqual(UserId | cls, Union[UserId, cls])
+                self.assertEqual(cls | UserId, Union[cls, UserId])
+
+                self.assertEqual(get_args(UserId | cls), (UserId, cls))
+                self.assertEqual(get_args(cls | UserId), (cls, UserId))
+
+    def test_special_attrs(self):
+        UserId = NewType('UserId', int)
+
+        self.assertEqual(UserId.__name__, 'UserId')
+        self.assertEqual(UserId.__qualname__, 'UserId')
+        self.assertEqual(UserId.__module__, __name__)
+
+    def test_repr(self):
+        UserId = NewType('UserId', int)
+
+        self.assertEqual(repr(UserId), f'{__name__}.UserId')
 
 class NamedTupleTests(BaseTestCase):
     class NestedEmployee(NamedTuple):
