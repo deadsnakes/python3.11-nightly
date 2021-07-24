@@ -7,7 +7,7 @@ Subject: argparse-no-shutil
  1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/Lib/argparse.py b/Lib/argparse.py
-index 66fa0f4..01baa54 100644
+index b04b95b..d2371ca 100644
 --- a/Lib/argparse.py
 +++ b/Lib/argparse.py
 @@ -175,9 +175,12 @@ def __init__(self,
