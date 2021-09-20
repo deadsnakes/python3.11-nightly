@@ -178,7 +178,7 @@ index 3414a76..28ea4e2 100644
              return os.path.join(libpython, "site-packages")
      elif os.name == "nt":
 diff --git a/Lib/distutils/tests/test_bdist_dumb.py b/Lib/distutils/tests/test_bdist_dumb.py
-index 01a233b..f99dec5 100644
+index bb860c8..c13a1df 100644
 --- a/Lib/distutils/tests/test_bdist_dumb.py
 +++ b/Lib/distutils/tests/test_bdist_dumb.py
 @@ -85,7 +85,7 @@ def test_simple_built(self):
@@ -191,7 +191,7 @@ index 01a233b..f99dec5 100644
              wanted.append('foo.%s.pyc' % sys.implementation.cache_tag)
          self.assertEqual(contents, sorted(wanted))
 diff --git a/Lib/distutils/tests/test_install.py b/Lib/distutils/tests/test_install.py
-index 0632024..bfc8fe1 100644
+index b2a3887..2a28fd4 100644
 --- a/Lib/distutils/tests/test_install.py
 +++ b/Lib/distutils/tests/test_install.py
 @@ -205,7 +205,7 @@ def test_record(self):
@@ -213,7 +213,7 @@ index 0632024..bfc8fe1 100644
  
      def test_debug_mode(self):
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
-index eac7349..c6e6fdc 100755
+index b7e0db7..2ce7ff4 100755
 --- a/Lib/pydoc.py
 +++ b/Lib/pydoc.py
 @@ -505,6 +505,7 @@ def getdocloc(self, object, basedir=sysconfig.get_path('stdlib')):
@@ -274,7 +274,7 @@ index 939893e..0fb8a3f 100644
              sitepackages.append(prefix)
  
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index d700880..471812e 100644
+index 95b48f6..678d905 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
 @@ -56,6 +56,26 @@
@@ -305,7 +305,7 @@ index d700880..471812e 100644
  
  
 diff --git a/Lib/test/test_site.py b/Lib/test/test_site.py
-index fa74e77..5baf274 100644
+index 5f06a0d..830ab52 100644
 --- a/Lib/test/test_site.py
 +++ b/Lib/test/test_site.py
 @@ -284,16 +284,16 @@ def test_getsitepackages(self):
