@@ -14,8 +14,11 @@ extern "C" {
    store a duration, and so indirectly a date (related to another date, like
    UNIX epoch). */
 typedef int64_t _PyTime_t;
+// _PyTime_MIN nanoseconds is around -292.3 years
 #define _PyTime_MIN INT64_MIN
+// _PyTime_MAX nanoseconds is around +292.3 years
 #define _PyTime_MAX INT64_MAX
+#define _SIZEOF_PYTIME_T 8
 
 typedef enum {
     /* Round towards minus infinity (-inf).
@@ -124,9 +127,11 @@ PyAPI_FUNC(_PyTime_t) _PyTime_As100Nanoseconds(_PyTime_t t,
    object. */
 PyAPI_FUNC(PyObject *) _PyTime_AsNanosecondsObject(_PyTime_t t);
 
+#ifndef MS_WINDOWS
 /* Create a timestamp from a timeval structure.
    Raise an exception and return -1 on overflow, return 0 on success. */
 PyAPI_FUNC(int) _PyTime_FromTimeval(_PyTime_t *tp, struct timeval *tv);
+#endif
 
 /* Convert a timestamp to a timeval structure (microsecond resolution).
    tv_usec is always positive.
@@ -136,8 +141,9 @@ PyAPI_FUNC(int) _PyTime_AsTimeval(_PyTime_t t,
     struct timeval *tv,
     _PyTime_round_t round);
 
-/* Similar to _PyTime_AsTimeval(), but don't raise an exception on error. */
-PyAPI_FUNC(int) _PyTime_AsTimeval_noraise(_PyTime_t t,
+/* Similar to _PyTime_AsTimeval() but don't raise an exception on overflow.
+   On overflow, clamp tv_sec to _PyTime_t min/max. */
+PyAPI_FUNC(void) _PyTime_AsTimeval_clamp(_PyTime_t t,
     struct timeval *tv,
     _PyTime_round_t round);
 
@@ -162,6 +168,10 @@ PyAPI_FUNC(int) _PyTime_FromTimespec(_PyTime_t *tp, struct timespec *ts);
    tv_nsec is always positive.
    Raise an exception and return -1 on error, return 0 on success. */
 PyAPI_FUNC(int) _PyTime_AsTimespec(_PyTime_t t, struct timespec *ts);
+
+/* Similar to _PyTime_AsTimespec() but don't raise an exception on overflow.
+   On overflow, clamp tv_sec to _PyTime_t min/max. */
+PyAPI_FUNC(void) _PyTime_AsTimespec_clamp(_PyTime_t t, struct timespec *ts);
 #endif
 
 /* Compute ticks * mul / div.
@@ -181,8 +191,8 @@ typedef struct {
 /* Get the current time from the system clock.
 
    If the internal clock fails, silently ignore the error and return 0.
-   On integer overflow, silently ignore the overflow and truncated the clock to
-   _PyTime_MIN or _PyTime_MAX.
+   On integer overflow, silently ignore the overflow and clamp the clock to
+   [_PyTime_MIN; _PyTime_MAX].
 
    Use _PyTime_GetSystemClockWithInfo() to check for failure. */
 PyAPI_FUNC(_PyTime_t) _PyTime_GetSystemClock(void);
@@ -201,8 +211,8 @@ PyAPI_FUNC(int) _PyTime_GetSystemClockWithInfo(
    results of consecutive calls is valid.
 
    If the internal clock fails, silently ignore the error and return 0.
-   On integer overflow, silently ignore the overflow and truncated the clock to
-   _PyTime_MIN or _PyTime_MAX.
+   On integer overflow, silently ignore the overflow and clamp the clock to
+   [_PyTime_MIN; _PyTime_MAX].
 
    Use _PyTime_GetMonotonicClockWithInfo() to check for failure. */
 PyAPI_FUNC(_PyTime_t) _PyTime_GetMonotonicClock(void);
@@ -232,8 +242,8 @@ PyAPI_FUNC(int) _PyTime_gmtime(time_t t, struct tm *tm);
    measure a short duration.
 
    If the internal clock fails, silently ignore the error and return 0.
-   On integer overflow, silently ignore the overflow and truncated the clock to
-   _PyTime_MIN or _PyTime_MAX.
+   On integer overflow, silently ignore the overflow and clamp the clock to
+   [_PyTime_MIN; _PyTime_MAX].
 
    Use _PyTime_GetPerfCounterWithInfo() to check for failure. */
 PyAPI_FUNC(_PyTime_t) _PyTime_GetPerfCounter(void);
