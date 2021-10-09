@@ -213,7 +213,7 @@ index b2a3887..2a28fd4 100644
  
      def test_debug_mode(self):
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
-index b7e0db7..2ce7ff4 100755
+index 161da22..2c30dd7 100755
 --- a/Lib/pydoc.py
 +++ b/Lib/pydoc.py
 @@ -505,6 +505,7 @@ def getdocloc(self, object, basedir=sysconfig.get_path('stdlib')):
