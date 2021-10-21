@@ -9,7 +9,7 @@ Subject: disable-sem-check
  1 file changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 66405f3..0c5b285 100644
+index 6183392..3181224 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -4710,8 +4710,13 @@ int main(void) {
