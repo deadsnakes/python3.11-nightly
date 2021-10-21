@@ -7,11 +7,11 @@ Subject: setup-modules
  1 file changed, 6 insertions(+), 22 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index ba8c154..6418903 100644
+index 2e44ec2..97b72c0 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
-@@ -175,7 +175,7 @@ _symtable symtablemodule.c
- #_testcapi _testcapimodule.c    # Python C API test module
+@@ -174,7 +174,7 @@ _symtable symtablemodule.c
+ #_testcapi _testcapimodule.c    # Python C API test module; CANNOT be statically compiled!
  #_testinternalcapi _testinternalcapi.c -I$(srcdir)/Include/internal -DPy_BUILD_CORE_MODULE  # Python internal C API test module
  #_random _randommodule.c -DPy_BUILD_CORE_MODULE	# Random number generator
 -#_elementtree -I$(srcdir)/Modules/expat -DHAVE_EXPAT_CONFIG_H -DUSE_PYEXPAT_CAPI _elementtree.c	# elementtree accelerator
@@ -19,7 +19,7 @@ index ba8c154..6418903 100644
  #_pickle -DPy_BUILD_CORE_MODULE _pickle.c	# pickle accelerator
  #_datetime _datetimemodule.c	# datetime accelerator
  #_zoneinfo _zoneinfo.c -DPy_BUILD_CORE_MODULE	# zoneinfo accelerator
-@@ -209,26 +209,7 @@ _symtable symtablemodule.c
+@@ -212,26 +212,7 @@ _symtable symtablemodule.c
  
  # Socket module helper for SSL support; you must comment out the other
  # socket line above, and edit the OPENSSL variable:
@@ -47,7 +47,7 @@ index ba8c154..6418903 100644
  
  # The crypt module is now disabled by default because it breaks builds
  # on many systems (where -lcrypt is needed), e.g. Linux (I believe).
-@@ -261,6 +242,7 @@ _symtable symtablemodule.c
+@@ -264,6 +245,7 @@ _symtable symtablemodule.c
  
  #_md5 md5module.c -DPy_BUILD_CORE_BUILTIN
  
@@ -55,7 +55,7 @@ index ba8c154..6418903 100644
  
  # The _sha module implements the SHA checksum algorithms.
  # (NIST's Secure Hash Algorithms.)
-@@ -345,6 +327,8 @@ _symtable symtablemodule.c
+@@ -352,6 +334,8 @@ _symtable symtablemodule.c
  # Helper module for various ascii-encoders
  #binascii binascii.c -DPy_BUILD_CORE_MODULE
  
@@ -64,7 +64,7 @@ index ba8c154..6418903 100644
  # Andrew Kuchling's zlib module.
  # This require zlib 1.1.3 (or later).
  # See http://www.gzip.org/zlib/
-@@ -353,7 +337,7 @@ _symtable symtablemodule.c
+@@ -360,7 +344,7 @@ _symtable symtablemodule.c
  # Interface to the Expat XML parser
  # More information on Expat can be found at www.libexpat.org.
  #
