@@ -3,28 +3,49 @@ Date: Thu, 14 Feb 2019 18:59:14 -0800
 Subject: setup-modules
 
 ---
- Modules/Setup | 28 ++++++----------------------
- 1 file changed, 6 insertions(+), 22 deletions(-)
+ Modules/Setup | 31 ++++++-------------------------
+ 1 file changed, 6 insertions(+), 25 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index 2e44ec2..97b72c0 100644
+index d06d733..0d19a3a 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
-@@ -174,7 +174,7 @@ _symtable symtablemodule.c
- #_testcapi _testcapimodule.c    # Python C API test module; CANNOT be statically compiled!
- #_testinternalcapi _testinternalcapi.c -I$(srcdir)/Include/internal -DPy_BUILD_CORE_MODULE  # Python internal C API test module
- #_random _randommodule.c -DPy_BUILD_CORE_MODULE	# Random number generator
--#_elementtree -I$(srcdir)/Modules/expat -DHAVE_EXPAT_CONFIG_H -DUSE_PYEXPAT_CAPI _elementtree.c	# elementtree accelerator
-+#_elementtree _elementtree.c -lexpat	# elementtree accelerator
- #_pickle -DPy_BUILD_CORE_MODULE _pickle.c	# pickle accelerator
- #_datetime _datetimemodule.c	# datetime accelerator
- #_zoneinfo _zoneinfo.c -DPy_BUILD_CORE_MODULE	# zoneinfo accelerator
-@@ -212,26 +212,7 @@ _symtable symtablemodule.c
+@@ -149,7 +149,7 @@ time timemodule.c
+ #_contextvars _contextvarsmodule.c
+ #_csv _csv.c
+ #_datetime _datetimemodule.c
+-#_elementtree -I$(srcdir)/Modules/expat _elementtree.c
++#_elementtree _elementtree.c -lexpat    # elementtree accelerator
+ #_heapq _heapqmodule.c
+ #_json _json.c
+ #_lsprof _lsprof.c rotatingtree.c
+@@ -173,7 +173,7 @@ time timemodule.c
+ #binascii binascii.c
+ #cmath cmathmodule.c _math.c  # -lm
+ #math mathmodule.c _math.c  # -lm
+-#pyexpat -I$(srcdir)/Modules/expat  expat/xmlparse.c expat/xmlrole.c expat/xmltok.c pyexpat.c
++#pyexpat pyexpat.c -lexpat
+ #unicodedata  unicodedata.c
  
- # Socket module helper for SSL support; you must comment out the other
- # socket line above, and edit the OPENSSL variable:
--# OPENSSL=/path/to/openssl/directory
--# _ssl _ssl.c \
+ # Modules with some UNIX dependencies -- on by default:
+@@ -205,6 +205,8 @@ time timemodule.c
+ #_lzma _lzmamodule.c -llzma
+ #zlib -I$(prefix)/include -L$(exec_prefix)/lib -lz zlibmodule.c
+ 
++#_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c _ctypes/malloc_closure.c -lffi
++
+ # GNU readline.  Unlike previous Python incarnations, GNU readline is
+ # now incorporated in an optional module, configured in the Setup file
+ # instead of by a configure script switch.  You may have to insert a
+@@ -215,29 +217,8 @@ time timemodule.c
+ 
+ #readline readline.c -lreadline -ltermcap
+ 
+-# Set OpenSSL when not using the system copy found by ./configure.
+-#OPENSSL=/path/to/openssl/directory
+-
+-# To dynamically link OpenSSL:
+-#_ssl _ssl.c \
 -#     -I$(OPENSSL)/include -L$(OPENSSL)/lib \
 -#     -lssl -lcrypto \
 -#     -DPy_BUILD_CORE_BUILTIN
@@ -34,7 +55,7 @@ index 2e44ec2..97b72c0 100644
 -#     -DPy_BUILD_CORE_BUILTIN
 -
 -# To statically link OpenSSL:
--# _ssl _ssl.c \
+-#_ssl _ssl.c \
 -#     -I$(OPENSSL)/include -L$(OPENSSL)/lib \
 -#     -l:libssl.a -Wl,--exclude-libs,libssl.a \
 -#     -l:libcrypto.a -Wl,--exclude-libs,libcrypto.a \
@@ -44,32 +65,7 @@ index 2e44ec2..97b72c0 100644
 -#     -l:libcrypto.a -Wl,--exclude-libs,libcrypto.a \
 -#     -DPy_BUILD_CORE_BUILTIN
 +#_ssl _ssl.c -lssl -lcrypto -DPy_BUILD_CORE_BUILTIN
- 
- # The crypt module is now disabled by default because it breaks builds
- # on many systems (where -lcrypt is needed), e.g. Linux (I believe).
-@@ -264,6 +245,7 @@ _symtable symtablemodule.c
- 
- #_md5 md5module.c -DPy_BUILD_CORE_BUILTIN
- 
 +#_hashlib _hashopenssl.c -lssl -lcrypto -DPy_BUILD_CORE_BUILTIN
  
- # The _sha module implements the SHA checksum algorithms.
- # (NIST's Secure Hash Algorithms.)
-@@ -352,6 +334,8 @@ _symtable symtablemodule.c
- # Helper module for various ascii-encoders
- #binascii binascii.c -DPy_BUILD_CORE_MODULE
- 
-+#_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c _ctypes/malloc_closure.c -lffi
-+
- # Andrew Kuchling's zlib module.
- # This require zlib 1.1.3 (or later).
- # See http://www.gzip.org/zlib/
-@@ -360,7 +344,7 @@ _symtable symtablemodule.c
- # Interface to the Expat XML parser
- # More information on Expat can be found at www.libexpat.org.
+ # The _tkinter module.
  #
--#pyexpat expat/xmlparse.c expat/xmlrole.c expat/xmltok.c pyexpat.c -I$(srcdir)/Modules/expat -DHAVE_EXPAT_CONFIG_H -DXML_POOR_ENTROPY -DUSE_PYEXPAT_CAPI
-+pyexpat pyexpat.c -lexpat
- 
- # Hye-Shik Chang's CJKCodecs
- 
