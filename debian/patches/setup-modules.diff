@@ -7,7 +7,7 @@ Subject: setup-modules
  1 file changed, 6 insertions(+), 25 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index d06d733..0d19a3a 100644
+index 99c7d4e..9bd7dbb 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
 @@ -149,7 +149,7 @@ time timemodule.c
@@ -21,8 +21,8 @@ index d06d733..0d19a3a 100644
  #_lsprof _lsprof.c rotatingtree.c
 @@ -173,7 +173,7 @@ time timemodule.c
  #binascii binascii.c
- #cmath cmathmodule.c _math.c  # -lm
- #math mathmodule.c _math.c  # -lm
+ #cmath cmathmodule.c  # -lm
+ #math mathmodule.c  # -lm
 -#pyexpat -I$(srcdir)/Modules/expat  expat/xmlparse.c expat/xmlrole.c expat/xmltok.c pyexpat.c
 +#pyexpat pyexpat.c -lexpat
  #unicodedata  unicodedata.c
