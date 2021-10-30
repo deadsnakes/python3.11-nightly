@@ -7,7 +7,7 @@ Subject: setup-modules
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index b4eae38..aa1a8e5 100644
+index 57584f3..aae0edd 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
 @@ -173,8 +173,8 @@ time timemodule.c
