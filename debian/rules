@@ -456,11 +456,6 @@ define __post_configure
 
 	: # and fix the timestamps
 	$(MAKE) -C $(1) Makefile Modules/config.c
-
-	: # this second rule doesn't build with -fPIC, remove it.
-	sed '/^Modules\/_math.o: .*PY_STDMODULE_CFLAGS/d' $(1)/Makefile > $(1)/Makefile.fixed
-	touch -r $(1)/Makefile $(1)/Makefile.fixed
-	mv -f $(1)/Makefile.fixed $(1)/Makefile
 endef
 
 stamps/stamp-mincheck: stamps/stamp-build-static debian/PVER-minimal.README.Debian.in
