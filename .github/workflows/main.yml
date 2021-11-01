@@ -52,10 +52,8 @@ jobs:
         path: runbooks
         repository: deadsnakes/runbooks
     - uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
     - name: install gbp
-      run: pip install gbp==0.9.20
+      run: pip install gbp==0.9.24
     - name: install devscripts
       run: sudo apt-get update -qq && sudo apt-get install -y devscripts
     - name: import gpg key
