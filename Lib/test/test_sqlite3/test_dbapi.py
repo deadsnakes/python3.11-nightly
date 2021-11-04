@@ -54,8 +54,9 @@ class ModuleTests(unittest.TestCase):
                          "apilevel is %s, should be 2.0" % sqlite.apilevel)
 
     def test_thread_safety(self):
-        self.assertEqual(sqlite.threadsafety, 1,
-                         "threadsafety is %d, should be 1" % sqlite.threadsafety)
+        self.assertIn(sqlite.threadsafety, {0, 1, 3},
+                      "threadsafety is %d, should be 0, 1 or 3" %
+                      sqlite.threadsafety)
 
     def test_param_style(self):
         self.assertEqual(sqlite.paramstyle, "qmark",
@@ -317,7 +318,7 @@ class ModuleTests(unittest.TestCase):
         with managed_connect(":memory:", in_mem=True) as con:
             with con:
                 con.execute("create table t(t integer check(t > 0))")
-            errmsg = "CHECK constraint failed"
+            errmsg = "constraint failed"
             with self.assertRaisesRegex(sqlite.IntegrityError, errmsg) as cm:
                 con.execute("insert into t values(-1)")
             exc = cm.exception
