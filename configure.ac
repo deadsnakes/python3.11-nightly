@@ -61,7 +61,7 @@ else
 fi
 
 AC_CONFIG_SRCDIR([Include/object.h])
-AC_CONFIG_HEADER(pyconfig.h)
+AC_CONFIG_HEADERS([pyconfig.h])
 
 AC_CANONICAL_HOST
 AC_SUBST(build)
@@ -132,10 +132,6 @@ VERSION=PYTHON_VERSION
 # Version number of Python's own shared library file.
 AC_SUBST(SOVERSION)
 SOVERSION=1.0
-
-# The later definition of _XOPEN_SOURCE disables certain features
-# on Linux, so we need _GNU_SOURCE to re-enable them (makedev, tm_zone).
-AC_DEFINE(_GNU_SOURCE, 1, [Define on Linux to activate all library features])
 
 # The later definition of _XOPEN_SOURCE and _POSIX_C_SOURCE disables
 # certain features on NetBSD, so we need _NETBSD_SOURCE to re-enable
@@ -664,6 +660,12 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_GREP
 AC_PROG_SED
+AC_PROG_EGREP
+
+# checks for UNIX variants that set C preprocessor variables
+# may set _GNU_SOURCE, __EXTENSIONS__, _POSIX_PTHREAD_SEMANTICS,
+# _POSIX_SOURCE, _POSIX_1_SOURCE, and more
+AC_USE_SYSTEM_EXTENSIONS
 
 AC_SUBST(CXX)
 AC_SUBST(MAINCC)
@@ -905,10 +907,6 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
    AC_MSG_RESULT([no])])
 LDFLAGS="$save_LDFLAGS"
 AC_SUBST(NO_AS_NEEDED)
-
-
-# checks for UNIX variants that set C preprocessor variables
-AC_USE_SYSTEM_EXTENSIONS
 
 AC_MSG_CHECKING([for the Android API level])
 cat >> conftest.c <<EOF
@@ -1640,30 +1638,33 @@ AC_SUBST(LDFLAGS_NODIST)
 UNIVERSAL_ARCH_FLAGS=
 AC_SUBST(UNIVERSAL_ARCH_FLAGS)
 
+dnl PY_CHECK_CC_WARNING(ENABLE, WARNING, [MSG])
+AC_DEFUN([PY_CHECK_CC_WARNING], [
+  AC_MSG_CHECKING(m4_ifblank([$3], [if we can $1 $CC $2 warning], [$3]))
+  AS_VAR_PUSHDEF([py_var], [ac_cv_$1_]m4_normalize($2)[_warning])
+  AS_VAR_COPY([py_cflags], [CFLAGS])
+  AS_VAR_SET([CFLAGS], ["$CFLAGS -W$2 -Werror"])
+  AC_CACHE_VAL(
+    [py_var],
+    [AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([[]], [[]])],
+      [AS_VAR_SET([py_var], [yes])],
+      [AS_VAR_SET([py_var], [no])],
+    )]
+  )
+  AS_VAR_COPY([CFLAGS], [py_cflags])
+  AC_MSG_RESULT([$py_var])
+  AS_VAR_POPDEF([py_var])
+])
+
 # tweak BASECFLAGS based on compiler and platform
 case $GCC in
 yes)
     CFLAGS_NODIST="$CFLAGS_NODIST -std=c99"
 
-    AC_MSG_CHECKING(for -Wextra)
-     ac_save_cc="$CC"
-     CC="$CC -Wextra -Werror"
-     AC_CACHE_VAL(ac_cv_extra_warnings,
-       AC_COMPILE_IFELSE(
-         [
-           AC_LANG_PROGRAM([[]], [[]])
-         ],[
-           ac_cv_extra_warnings=yes
-         ],[
-           ac_cv_extra_warnings=no
-         ]))
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_extra_warnings)
-
-    if test $ac_cv_extra_warnings = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -Wextra"
-    fi
+    PY_CHECK_CC_WARNING([enable], [extra], [if we can add -Wextra])
+    AS_VAR_IF([ac_cv_enable_extra_warning], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -Wextra"])
 
     # Python doesn't violate C99 aliasing rules, but older versions of
     # GCC produce warnings for legal Python code.  Enable
@@ -1695,121 +1696,31 @@ yes)
      CFLAGS="$save_CFLAGS"
      CC="$ac_save_cc"
     AC_MSG_RESULT($ac_cv_no_strict_aliasing)
-    if test $ac_cv_no_strict_aliasing = yes
-    then
-      BASECFLAGS="$BASECFLAGS -fno-strict-aliasing"
-    fi
+    AS_VAR_IF([ac_cv_no_strict_aliasing], [yes],
+              [BASECFLAGS="$BASECFLAGS -fno-strict-aliasing"])
 
     # ICC doesn't recognize the option, but only emits a warning
     ## XXX does it emit an unused result warning and can it be disabled?
-    case "$CC" in
-    *icc*)
-    ac_cv_disable_unused_result_warning=no
-    ;;
-    *)
-    AC_MSG_CHECKING(if we can turn off $CC unused result warning)
-     ac_save_cc="$CC"
-     CC="$CC -Wunused-result -Werror"
-     save_CFLAGS="$CFLAGS"
-     AC_CACHE_VAL(ac_cv_disable_unused_result_warning,
-       AC_COMPILE_IFELSE(
-         [
-	   AC_LANG_PROGRAM([[]], [[]])
-	 ],[
-           ac_cv_disable_unused_result_warning=yes
-	 ],[
-           ac_cv_disable_unused_result_warning=no
-	 ]))
-     CFLAGS="$save_CFLAGS"
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_disable_unused_result_warning)
-    ;;
-    esac
+    AS_CASE([$CC],
+            [*icc*], [ac_cv_disable_unused_result_warning=no]
+            [PY_CHECK_CC_WARNING([disable], [unused-result])])
+    AS_VAR_IF([ac_cv_disable_unused_result_warning], [yes],
+              [BASECFLAGS="$BASECFLAGS -Wno-unused-result"
+               CFLAGS_NODIST="$CFLAGS_NODIST -Wno-unused-result"])
 
-    if test $ac_cv_disable_unused_result_warning = yes
-    then
-      BASECFLAGS="$BASECFLAGS -Wno-unused-result"
-      CFLAGS_NODIST="$CFLAGS_NODIST -Wno-unused-result"
-    fi
+    PY_CHECK_CC_WARNING([disable], [unused-parameter])
+    AS_VAR_IF([ac_cv_disable_unused_parameter_warning], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -Wno-unused-parameter"])
 
-    AC_MSG_CHECKING(if we can turn off $CC unused parameter warning)
-     ac_save_cc="$CC"
-     CC="$CC -Wunused-parameter -Werror"
-     AC_CACHE_VAL(ac_cv_disable_unused_parameter_warning,
-       AC_COMPILE_IFELSE(
-         [
-           AC_LANG_PROGRAM([[]], [[]])
-         ],[
-           ac_cv_disable_unused_parameter_warning=yes
-         ],[
-           ac_cv_disable_unused_parameter_warning=no
-         ]))
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_disable_unused_parameter_warning)
+    PY_CHECK_CC_WARNING([disable], [missing-field-initializers])
+    AS_VAR_IF([ac_cv_disable_missing_field_initializers_warning], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -Wno-missing-field-initializers"])
 
-    if test $ac_cv_disable_unused_parameter_warning = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -Wno-unused-parameter"
-    fi
+    PY_CHECK_CC_WARNING([enable], [sign-compare])
+    AS_VAR_IF([ac_cv_enable_sign_compare_warning], [yes],
+              [BASECFLAGS="$BASECFLAGS -Wsign-compare"])
 
-    AC_MSG_CHECKING(if we can turn off $CC missing field initializers warning)
-     ac_save_cc="$CC"
-     CC="$CC -Wmissing-field-initializers -Werror"
-     AC_CACHE_VAL(ac_cv_disable_missing_field_initializers,
-       AC_COMPILE_IFELSE(
-         [
-           AC_LANG_PROGRAM([[]], [[]])
-         ],[
-           ac_cv_disable_missing_field_initializers=yes
-         ],[
-           ac_cv_disable_missing_field_initializers=no
-         ]))
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_disable_missing_field_initializers)
-
-    if test $ac_cv_disable_missing_field_initializers = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -Wno-missing-field-initializers"
-    fi
-
-    AC_MSG_CHECKING(if we can turn on $CC mixed sign comparison warning)
-     ac_save_cc="$CC"
-     CC="$CC -Wsign-compare"
-     save_CFLAGS="$CFLAGS"
-     AC_CACHE_VAL(ac_cv_enable_sign_compare_warning,
-       AC_COMPILE_IFELSE(
-         [
-	   AC_LANG_PROGRAM([[]], [[]])
-	 ],[
-           ac_cv_enable_sign_compare_warning=yes
-	 ],[
-           ac_cv_enable_sign_compare_warning=no
-	 ]))
-     CFLAGS="$save_CFLAGS"
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_enable_sign_compare_warning)
-
-    if test $ac_cv_enable_sign_compare_warning = yes
-    then
-      BASECFLAGS="$BASECFLAGS -Wsign-compare"
-    fi
-
-    AC_MSG_CHECKING(if we can turn on $CC unreachable code warning)
-     ac_save_cc="$CC"
-     CC="$CC -Wunreachable-code"
-     save_CFLAGS="$CFLAGS"
-     AC_CACHE_VAL(ac_cv_enable_unreachable_code_warning,
-       AC_COMPILE_IFELSE(
-         [
-	   AC_LANG_PROGRAM([[]], [[]])
-	 ],[
-           ac_cv_enable_unreachable_code_warning=yes
-	 ],[
-           ac_cv_enable_unreachable_code_warning=no
-	 ]))
-     CFLAGS="$save_CFLAGS"
-     CC="$ac_save_cc"
-
+    PY_CHECK_CC_WARNING([enable], [unreachable-code])
     # Don't enable unreachable code warning in debug mode, since it usually
     # results in non-standard code paths.
     # Issue #24324: Unfortunately, the unreachable code warning does not work
@@ -1825,27 +1736,10 @@ yes)
     else
       ac_cv_enable_unreachable_code_warning=no
     fi
-    AC_MSG_RESULT($ac_cv_enable_unreachable_code_warning)
 
-    AC_MSG_CHECKING(if we can turn on $CC strict-prototypes warning)
-     ac_save_cc="$CC"
-     CC="$CC -Werror -Wstrict-prototypes"
-     AC_CACHE_VAL(ac_cv_enable_enable_strict_prototypes_warning,
-       AC_COMPILE_IFELSE(
-         [
-       AC_LANG_PROGRAM([[]], [[]])
-     ],[
-       ac_cv_enable_strict_prototypes_warning=yes
-     ],[
-       ac_cv_enable_strict_prototypes_warning=no
-     ]))
-     CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_enable_strict_prototypes_warning)
-
-    if test $ac_cv_enable_strict_prototypes_warning = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -Wstrict-prototypes"
-    fi
+    PY_CHECK_CC_WARNING([enable], [strict-prototypes])
+    AS_VAR_IF([ac_cv_enable_strict_prototypes_warning], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -Wstrict-prototypes"])
 
     AC_MSG_CHECKING(if we can make implicit function declaration an error in $CC)
      ac_save_cc="$CC"
@@ -1862,10 +1756,8 @@ yes)
      CC="$ac_save_cc"
     AC_MSG_RESULT($ac_cv_enable_implicit_function_declaration_error)
 
-    if test $ac_cv_enable_implicit_function_declaration_error = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -Werror=implicit-function-declaration"
-    fi
+    AS_VAR_IF([ac_cv_enable_implicit_function_declaration_error], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -Werror=implicit-function-declaration"])
 
     AC_MSG_CHECKING(if we can use visibility in $CC)
      ac_save_cc="$CC"
@@ -1882,10 +1774,8 @@ yes)
      CC="$ac_save_cc"
     AC_MSG_RESULT($ac_cv_enable_visibility)
 
-    if test $ac_cv_enable_visibility = yes
-    then
-      CFLAGS_NODIST="$CFLAGS_NODIST -fvisibility=hidden"
-    fi
+    AS_VAR_IF([ac_cv_enable_visibility], [yes],
+              [CFLAGS_NODIST="$CFLAGS_NODIST -fvisibility=hidden"])
 
     # if using gcc on alpha, use -mieee to get (near) full IEEE 754
     # support.  Without this, treatment of subnormals doesn't follow
@@ -2243,8 +2133,11 @@ dnl struct {char *name; int *addr; char *doc;} desc = spam(foo, "something");
 dnl ]], [[;]])],[cpp_type=ansi],[AC_DEFINE(HAVE_OLD_CPP) cpp_type=traditional])
 dnl AC_MSG_RESULT($cpp_type)
 
+dnl autoconf 2.71 deprecates STDC_HEADERS, keep for backwards compatibility
+dnl assume C99 compilers provide ANSI C headers
+AC_DEFINE(STDC_HEADERS, 1, [Define to 1 if you have the ANSI C header files.])
+
 # checks for header files
-AC_HEADER_STDC
 AC_CHECK_HEADERS(asm/types.h crypt.h conio.h direct.h dlfcn.h errno.h \
 fcntl.h grp.h \
 ieeefp.h io.h langinfo.h libintl.h process.h pthread.h \
@@ -2273,14 +2166,8 @@ CFLAGS=$SAVE_CFLAGS
 # On Darwin (OS X) net/if.h requires sys/socket.h to be imported first.
 AC_CHECK_HEADERS([net/if.h], [], [],
 [#include <stdio.h>
-#ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <stddef.h>
-#else
-# ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-# endif
-#endif
+#include <stdlib.h>
+#include <stddef.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
@@ -3946,33 +3833,7 @@ fi
 
 # Check for compression libraries
 dnl Check if system zlib has *Copy() functions
-dnl
-dnl On MacOSX the linker will search for dylibs on the entire linker path
-dnl before searching for static libraries. setup.py adds -Wl,-search_paths_first
-dnl to revert to a more traditional unix behaviour and make it possible to
-dnl override the system libz with a local static library of libz. Temporarily
-dnl add that flag to our CFLAGS as well to ensure that we check the version
-dnl of libz that will be used by setup.py.
-dnl The -L/usr/local/lib is needed as wel to get the same compilation
-dnl environment as setup.py (and leaving it out can cause configure to use the
-dnl wrong version of the library)
-case $ac_sys_system/$ac_sys_release in
-Darwin/*)
-	_CUR_CFLAGS="${CFLAGS}"
-	_CUR_LDFLAGS="${LDFLAGS}"
-	CFLAGS="${CFLAGS} -Wl,-search_paths_first"
-	LDFLAGS="${LDFLAGS} -Wl,-search_paths_first -L/usr/local/lib"
-	;;
-esac
-
 AC_CHECK_LIB(z, inflateCopy, AC_DEFINE(HAVE_ZLIB_COPY, 1, [Define if the zlib library has inflateCopy]))
-
-case $ac_sys_system/$ac_sys_release in
-Darwin/*)
-	CFLAGS="${_CUR_CFLAGS}"
-	LDFLAGS="${_CUR_LDFLAGS}"
-	;;
-esac
 
 PY_CHECK_FUNC([hstrerror], [#include <netdb.h>])
 
@@ -4032,12 +3893,12 @@ AC_CHECK_FUNCS(setpgrp,
 # This gets us our -lcrypt in LIBS when required on the target platform.
 # Save/restore LIBS to avoid linking libpython with libcrypt.
 LIBS_SAVE=$LIBS
-AC_SEARCH_LIBS(crypt, crypt)
 AC_SEARCH_LIBS(crypt_r, crypt)
+LIBS="$LIBS_SAVE"
+AC_SEARCH_LIBS(crypt, crypt)
 
 AC_CHECK_FUNC(crypt_r,
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#define _GNU_SOURCE  /* Required for crypt_r()'s prototype in glibc. */
 #include <crypt.h>
 ]], [[
 struct crypt_data d;
@@ -4238,8 +4099,13 @@ fi
 
 AC_CHECK_FUNCS(getnameinfo)
 
+dnl autoconf 2.71 deprecates AC_HEADER_TIME, keep for backwards compatibility
+dnl TIME_WITH_SYS_TIME works on all supported systems that have sys/time.h
+AS_VAR_IF([ac_cv_header_sys_time_h], [yes], [
+  AC_DEFINE([TIME_WITH_SYS_TIME], 1, [Define to 1 if you can safely include both <sys/time.h> and <time.h>.])
+])
+
 # checks for structures
-AC_HEADER_TIME
 AC_STRUCT_TM
 AC_STRUCT_TIMEZONE
 AC_CHECK_MEMBERS([struct stat.st_rdev])
