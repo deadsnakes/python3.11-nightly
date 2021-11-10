@@ -9,10 +9,10 @@ Subject: disable-sem-check
  1 file changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 68ad3ae..3a14d53 100644
+index 8aa1384..11396aa 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4511,8 +4511,13 @@ int main(void) {
+@@ -4523,8 +4523,13 @@ int main(void) {
  AC_MSG_RESULT($ac_cv_posix_semaphores_enabled)
  if test $ac_cv_posix_semaphores_enabled = no
  then
@@ -28,7 +28,7 @@ index 68ad3ae..3a14d53 100644
  fi
  
  # Multiprocessing check for broken sem_getvalue
-@@ -4547,8 +4552,13 @@ int main(void){
+@@ -4559,8 +4564,13 @@ int main(void){
  AC_MSG_RESULT($ac_cv_broken_sem_getvalue)
  if test $ac_cv_broken_sem_getvalue = yes
  then
