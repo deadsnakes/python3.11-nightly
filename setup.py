@@ -1633,67 +1633,35 @@ class PyBuildExt(build_ext):
                                    '-framework', 'CoreFoundation']))
 
     def detect_compress_exts(self):
-        # Andrew Kuchling's zlib module.  Note that some versions of zlib
-        # 1.1.3 have security problems.  See CERT Advisory CA-2002-07:
-        # http://www.cert.org/advisories/CA-2002-07.html
-        #
-        # zlib 1.1.4 is fixed, but at least one vendor (RedHat) has decided to
-        # patch its zlib 1.1.3 package instead of upgrading to 1.1.4.  For
-        # now, we still accept 1.1.3, because we think it's difficult to
-        # exploit this in Python, and we'd rather make it RedHat's problem
-        # than our problem <wink>.
-        #
-        # You can upgrade zlib to version 1.1.4 yourself by going to
-        # http://www.gzip.org/zlib/
-        zlib_inc = find_file('zlib.h', [], self.inc_dirs)
-        have_zlib = False
-        if zlib_inc is not None:
-            zlib_h = zlib_inc[0] + '/zlib.h'
-            version = '"0.0.0"'
-            version_req = '"1.1.3"'
-            if MACOS and is_macosx_sdk_path(zlib_h):
-                zlib_h = os.path.join(macosx_sdk_root(), zlib_h[1:])
-            with open(zlib_h) as fp:
-                while 1:
-                    line = fp.readline()
-                    if not line:
-                        break
-                    if line.startswith('#define ZLIB_VERSION'):
-                        version = line.split()[2]
-                        break
-            if version >= version_req:
-                if (self.compiler.find_library_file(self.lib_dirs, 'z')):
-                    self.add(Extension('zlib', ['zlibmodule.c'],
-                                       libraries=['z']))
-                    have_zlib = True
-                else:
-                    self.missing.append('zlib')
-            else:
-                self.missing.append('zlib')
+        # Andrew Kuchling's zlib module.
+        have_zlib = sysconfig.get_config_var("HAVE_LIBZ")
+        if have_zlib:
+            self.add(Extension('zlib', ['zlibmodule.c'],
+                                libraries=['z']))
         else:
             self.missing.append('zlib')
 
         # Helper module for various ascii-encoders.  Uses zlib for an optimized
         # crc32 if we have it.  Otherwise binascii uses its own.
-        extra_compile_args = []
         if have_zlib:
-            extra_compile_args.append('-DUSE_ZLIB_CRC32')
+            define_macros = [('USE_ZLIB_CRC32', None)]
             libraries = ['z']
         else:
+            define_macros = None
             libraries = []
         self.add(Extension('binascii', ['binascii.c'],
-                           extra_compile_args=extra_compile_args,
+                           define_macros=define_macros,
                            libraries=libraries))
 
         # Gustavo Niemeyer's bz2 module.
-        if (self.compiler.find_library_file(self.lib_dirs, 'bz2')):
+        if sysconfig.get_config_var("HAVE_LIBBZ2"):
             self.add(Extension('_bz2', ['_bz2module.c'],
                                libraries=['bz2']))
         else:
             self.missing.append('_bz2')
 
         # LZMA compression support.
-        if self.compiler.find_library_file(self.lib_dirs, 'lzma'):
+        if sysconfig.get_config_var("HAVE_LIBLZMA"):
             self.add(Extension('_lzma', ['_lzmamodule.c'],
                                libraries=['lzma']))
         else:
