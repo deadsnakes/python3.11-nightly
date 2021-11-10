@@ -377,10 +377,6 @@ AC_SUBST(FRAMEWORKINSTALLAPPSPREFIX)
 
 AC_DEFINE_UNQUOTED(_PYTHONFRAMEWORK, "${PYTHONFRAMEWORK}", [framework name])
 
-##AC_ARG_WITH(dyld,
-##            AS_HELP_STRING([--with-dyld],
-##                           [use (OpenStep|Rhapsody) dynamic linker]))
-##
 # Set name for machine-dependent library files
 AC_ARG_VAR([MACHDEP], [name for machine-dependent library files])
 AC_MSG_CHECKING(MACHDEP)
@@ -947,7 +943,6 @@ atheos*|Linux*/1*)
    exit 1;;
 esac
 
-AC_EXEEXT
 AC_MSG_CHECKING(for --with-suffix)
 AC_ARG_WITH(suffix,
             AS_HELP_STRING([--with-suffix=SUFFIX], [set executable suffix to SUFFIX (default is '.exe')]),
@@ -3831,9 +3826,26 @@ if test "$ac_cv_have_lchflags" = yes ; then
   AC_DEFINE(HAVE_LCHFLAGS, 1, [Define to 1 if you have the 'lchflags' function.])
 fi
 
-# Check for compression libraries
-dnl Check if system zlib has *Copy() functions
-AC_CHECK_LIB(z, inflateCopy, AC_DEFINE(HAVE_ZLIB_COPY, 1, [Define if the zlib library has inflateCopy]))
+dnl Check for compression libraries
+AC_CHECK_HEADERS([zlib.h], [
+  save_LIBS="$LIBS"
+  AC_CHECK_LIB([z], [gzread])
+  LIBS="$save_LIBS"
+  AC_CHECK_LIB([z], [inflateCopy], [AC_DEFINE(HAVE_ZLIB_COPY, 1, [Define if the zlib library has inflateCopy])])
+  LIBS="$save_LIBS"
+])
+
+AC_CHECK_HEADERS([bzlib.h], [
+  save_LIBS="$LIBS"
+  AC_CHECK_LIB([bz2], [BZ2_bzCompress])
+  LIBS="$save_LIBS"
+])
+
+AC_CHECK_HEADERS([lzma.h], [
+  save_LIBS="$LIBS"
+  AC_CHECK_LIB([lzma], [lzma_easy_encoder])
+  LIBS="$save_LIBS"
+])
 
 PY_CHECK_FUNC([hstrerror], [#include <netdb.h>])
 
