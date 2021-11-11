@@ -7,7 +7,7 @@ Subject: setup-modules
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index 57584f3..aae0edd 100644
+index 49c6903..3590e1a 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
 @@ -173,8 +173,8 @@ time timemodule.c
@@ -28,7 +28,7 @@ index 57584f3..aae0edd 100644
 -#_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c -ldl -lffi -DHAVE_FFI_PREP_CIF_VAR -DHAVE_FFI_PREP_CLOSURE_LOC -DHAVE_FFI_CLOSURE_ALLOC
 +#_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c _ctypes/malloc_closure.c -lffi
  # The _dbm module supports NDBM, GDBM with compat module, and Berkeley DB.
- #_dbm _dbmmodule.c -lgdbm_compat -DHAVE_NDBM_H
+ #_dbm _dbmmodule.c -lgdbm_compat -DUSE_GDBM_COMPAT
  #_gdbm _gdbmmodule.c -lgdbm
 @@ -228,8 +228,8 @@ time timemodule.c
  #readline readline.c -lreadline -ltermcap
