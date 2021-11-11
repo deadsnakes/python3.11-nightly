@@ -155,6 +155,36 @@ define_xopen_source=yes
 AC_SUBST(CONFIG_ARGS)
 CONFIG_ARGS="$ac_configure_args"
 
+dnl Allow users to disable pkg-config or require pkg-config
+AC_ARG_WITH(
+  [pkg-config],
+  [AS_HELP_STRING([[--with-pkg-config=[yes|no|check]]],
+                  [use pkg-config to detect build options (default is check)])],
+  [],
+  [with_pkg_config=check]
+)
+AS_CASE([$with_pkg_config],
+  [yes|check], [
+    if test -z "$PKG_CONFIG"; then
+      dnl invalidate stale config.cache values
+      AS_UNSET([PKG_CONFIG])
+      AS_UNSET([ac_cv_path_ac_pt_PKG_CONFIG])
+      AS_UNSET([ac_cv_prog_ac_ct_PKG_CONFIG])
+    fi
+    PKG_PROG_PKG_CONFIG
+  ],
+  [no], [
+    PKG_CONFIG=''
+    dnl force AX_CHECK_OPENSSL to ignore pkg-config
+    ac_cv_path_ac_pt_PKG_CONFIG=''
+    ac_cv_prog_ac_ct_PKG_CONFIG=''
+  ],
+  [AC_MSG_ERROR([invalid argument --with-pkg-config=$with_pkg_config])]
+)
+if test "$with_pkg_config" = yes -a -z "$PKG_CONFIG"; then
+  AC_MSG_ERROR([pkg-config is required])]
+fi
+
 AC_MSG_CHECKING([for --enable-universalsdk])
 AC_ARG_ENABLE(universalsdk,
 	AS_HELP_STRING([--enable-universalsdk@<:@=SDKDIR@:>@],
@@ -893,15 +923,16 @@ if test x$MULTIARCH != x; then
 fi
 AC_SUBST(MULTIARCH_CPPFLAGS)
 
-AC_MSG_CHECKING([for -Wl,--no-as-needed])
-save_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -Wl,--no-as-needed"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-  [NO_AS_NEEDED="-Wl,--no-as-needed"
-   AC_MSG_RESULT([yes])],
-  [NO_AS_NEEDED=""
-   AC_MSG_RESULT([no])])
-LDFLAGS="$save_LDFLAGS"
+AC_CACHE_CHECK([for -Wl,--no-as-needed], [ac_cv_wl_no_as_needed], [
+  save_LDFLAGS="$LDFLAGS"
+  AS_VAR_APPEND([LDFLAGS], [-Wl,--no-as-needed])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+    [NO_AS_NEEDED="-Wl,--no-as-needed"
+     ac_cv_wl_no_as_needed=yes],
+    [NO_AS_NEEDED=""
+     ac_cv_wl_no_as_needed=no])
+  LDFLAGS="$save_LDFLAGS"
+])
 AC_SUBST(NO_AS_NEEDED)
 
 AC_MSG_CHECKING([for the Android API level])
@@ -1635,20 +1666,15 @@ AC_SUBST(UNIVERSAL_ARCH_FLAGS)
 
 dnl PY_CHECK_CC_WARNING(ENABLE, WARNING, [MSG])
 AC_DEFUN([PY_CHECK_CC_WARNING], [
-  AC_MSG_CHECKING(m4_ifblank([$3], [if we can $1 $CC $2 warning], [$3]))
   AS_VAR_PUSHDEF([py_var], [ac_cv_$1_]m4_normalize($2)[_warning])
-  AS_VAR_COPY([py_cflags], [CFLAGS])
-  AS_VAR_SET([CFLAGS], ["$CFLAGS -W$2 -Werror"])
-  AC_CACHE_VAL(
-    [py_var],
-    [AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM([[]], [[]])],
-      [AS_VAR_SET([py_var], [yes])],
-      [AS_VAR_SET([py_var], [no])],
-    )]
-  )
-  AS_VAR_COPY([CFLAGS], [py_cflags])
-  AC_MSG_RESULT([$py_var])
+  AC_CACHE_CHECK(m4_ifblank([$3], [if we can $1 $CC $2 warning], [$3]), [py_var], [
+    AS_VAR_COPY([py_cflags], [CFLAGS])
+    AS_VAR_APPEND([CFLAGS], ["-W$2 -Werror"])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+                      [AS_VAR_SET([py_var], [yes])],
+                      [AS_VAR_SET([py_var], [no])])
+    AS_VAR_COPY([CFLAGS], [py_cflags])
+  ])
   AS_VAR_POPDEF([py_var])
 ])
 
@@ -1665,11 +1691,11 @@ yes)
     # GCC produce warnings for legal Python code.  Enable
     # -fno-strict-aliasing on versions of GCC that support but produce
     # warnings.  See Issue3326
-    AC_MSG_CHECKING(whether $CC accepts and needs -fno-strict-aliasing)
      ac_save_cc="$CC"
      CC="$CC -fno-strict-aliasing"
      save_CFLAGS="$CFLAGS"
-     AC_CACHE_VAL(ac_cv_no_strict_aliasing,
+     AC_CACHE_CHECK([whether $CC accepts and needs -fno-strict-aliasing],
+                    [ac_cv_no_strict_aliasing],
        AC_COMPILE_IFELSE(
          [
 	   AC_LANG_PROGRAM([[]], [[]])
@@ -1690,7 +1716,6 @@ yes)
 	 ]))
      CFLAGS="$save_CFLAGS"
      CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_no_strict_aliasing)
     AS_VAR_IF([ac_cv_no_strict_aliasing], [yes],
               [BASECFLAGS="$BASECFLAGS -fno-strict-aliasing"])
 
@@ -1736,10 +1761,10 @@ yes)
     AS_VAR_IF([ac_cv_enable_strict_prototypes_warning], [yes],
               [CFLAGS_NODIST="$CFLAGS_NODIST -Wstrict-prototypes"])
 
-    AC_MSG_CHECKING(if we can make implicit function declaration an error in $CC)
      ac_save_cc="$CC"
      CC="$CC -Werror=implicit-function-declaration"
-     AC_CACHE_VAL(ac_cv_enable_implicit_function_declaration_error,
+     AC_CACHE_CHECK([if we can make implicit function declaration an error in $CC],
+                    [ac_cv_enable_implicit_function_declaration_error],
        AC_COMPILE_IFELSE(
          [
 	   AC_LANG_PROGRAM([[]], [[]])
@@ -1749,15 +1774,13 @@ yes)
            ac_cv_enable_implicit_function_declaration_error=no
 	 ]))
      CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_enable_implicit_function_declaration_error)
 
     AS_VAR_IF([ac_cv_enable_implicit_function_declaration_error], [yes],
               [CFLAGS_NODIST="$CFLAGS_NODIST -Werror=implicit-function-declaration"])
 
-    AC_MSG_CHECKING(if we can use visibility in $CC)
      ac_save_cc="$CC"
      CC="$CC -fvisibility=hidden"
-     AC_CACHE_VAL(ac_cv_enable_visibility,
+     AC_CACHE_CHECK([if we can use visibility in $CC], [ac_cv_enable_visibility],
        AC_COMPILE_IFELSE(
          [
 	   AC_LANG_PROGRAM([[]], [[]])
@@ -1767,7 +1790,6 @@ yes)
            ac_cv_enable_visibility=no
 	 ]))
      CC="$ac_save_cc"
-    AC_MSG_RESULT($ac_cv_enable_visibility)
 
     AS_VAR_IF([ac_cv_enable_visibility], [yes],
               [CFLAGS_NODIST="$CFLAGS_NODIST -fvisibility=hidden"])
@@ -1967,8 +1989,8 @@ fi
 # complain if unaccepted options are passed (e.g. gcc on Mac OS X).
 # So we have to see first whether pthreads are available without
 # options before we can check whether -Kpthread improves anything.
-AC_MSG_CHECKING(whether pthreads are available without options)
-AC_CACHE_VAL(ac_cv_pthread_is_default,
+AC_CACHE_CHECK([whether pthreads are available without options],
+               [ac_cv_pthread_is_default],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <pthread.h>
@@ -1988,7 +2010,6 @@ int main(){
   ac_cv_pthread=no
 ],[ac_cv_pthread_is_default=no],[ac_cv_pthread_is_default=no])
 ])
-AC_MSG_RESULT($ac_cv_pthread_is_default)
 
 
 if test $ac_cv_pthread_is_default = yes
@@ -2000,8 +2021,7 @@ else
 # Some compilers won't report that they do not support -Kpthread,
 # so we need to run a program to see whether it really made the
 # function available.
-AC_MSG_CHECKING(whether $CC accepts -Kpthread)
-AC_CACHE_VAL(ac_cv_kpthread,
+AC_CACHE_CHECK([whether $CC accepts -Kpthread], [ac_cv_kpthread],
 [ac_save_cc="$CC"
 CC="$CC -Kpthread"
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -2019,7 +2039,6 @@ int main(){
 }
 ]])],[ac_cv_kpthread=yes],[ac_cv_kpthread=no],[ac_cv_kpthread=no])
 CC="$ac_save_cc"])
-AC_MSG_RESULT($ac_cv_kpthread)
 fi
 
 if test $ac_cv_kpthread = no -a $ac_cv_pthread_is_default = no
@@ -2029,8 +2048,7 @@ then
 # Some compilers won't report that they do not support -Kthread,
 # so we need to run a program to see whether it really made the
 # function available.
-AC_MSG_CHECKING(whether $CC accepts -Kthread)
-AC_CACHE_VAL(ac_cv_kthread,
+AC_CACHE_CHECK([whether $CC accepts -Kthread], [ac_cv_kthread],
 [ac_save_cc="$CC"
 CC="$CC -Kthread"
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -2048,7 +2066,6 @@ int main(){
 }
 ]])],[ac_cv_kthread=yes],[ac_cv_kthread=no],[ac_cv_kthread=no])
 CC="$ac_save_cc"])
-AC_MSG_RESULT($ac_cv_kthread)
 fi
 
 if test $ac_cv_kthread = no -a $ac_cv_pthread_is_default = no
@@ -2058,8 +2075,7 @@ then
 # Some compilers won't report that they do not support -pthread,
 # so we need to run a program to see whether it really made the
 # function available.
-AC_MSG_CHECKING(whether $CC accepts -pthread)
-AC_CACHE_VAL(ac_cv_pthread,
+AC_CACHE_CHECK([whether $CC accepts -pthread], [ac_cv_pthread],
 [ac_save_cc="$CC"
 CC="$CC -pthread"
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -2077,7 +2093,6 @@ int main(){
 }
 ]])],[ac_cv_pthread=yes],[ac_cv_pthread=no],[ac_cv_pthread=no])
 CC="$ac_save_cc"])
-AC_MSG_RESULT($ac_cv_pthread)
 fi
 
 # If we have set a CC compiler flag for thread support then
@@ -2886,8 +2901,7 @@ dnl The AIX_BUILDDATE is obtained from the kernel fileset - bos.mp64
 esac
 
 # check for systems that require aligned memory access
-AC_MSG_CHECKING(aligned memory access is required)
-AC_CACHE_VAL(ac_cv_aligned_required,
+AC_CACHE_CHECK([aligned memory access is required], [ac_cv_aligned_required],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 int main()
 {
@@ -2905,7 +2919,6 @@ int main()
 [ac_cv_aligned_required=yes],
 [ac_cv_aligned_required=yes])
 ])
-AC_MSG_RESULT($ac_cv_aligned_required)
 if test "$ac_cv_aligned_required" = yes ; then
   AC_DEFINE([HAVE_ALIGNED_REQUIRED], [1],
     [Define if aligned memory access is required])
@@ -2994,8 +3007,6 @@ AC_MSG_RESULT($withval)
 LIBS="$withval $LIBS"
 ],
 [AC_MSG_RESULT(no)])
-
-PKG_PROG_PKG_CONFIG
 
 # Check for use of the system expat library
 AC_MSG_CHECKING(for --with-system-expat)
@@ -3111,6 +3122,74 @@ else
   TCLTK_LIBS="$with_tcltk_libs"
 fi
 
+# check for _gdbmmodulec dependencies
+AC_CHECK_HEADERS([gdbm.h], [
+  LIBS_SAVE=$LIBS
+  AC_CHECK_LIB([gdbm], [gdbm_open])
+  LIBS=$LIBS_SAVE
+])
+
+# check for _dbmmodule.c dependencies
+AC_CHECK_HEADERS([ndbm.h], [
+  LIBS_SAVE="$LIBS"
+  AC_CHECK_LIB([ndbm], [dbm_open])
+  LIBS="$LIBS_SAVE"
+  AC_CHECK_LIB([gdbm_compat], [dbm_open])
+  LIBS="$LIBS_SAVE"
+])
+
+# "gdbm-ndbm.h" and "gdbm/ndbm.h" are both normalized to "gdbm_ndbm_h"
+# unset ac_cv_header_gdbm_ndbm_h to prevent false positive cache hits.
+AS_UNSET([ac_cv_header_gdbm_ndbm_h])
+AC_CACHE_VAL([ac_cv_header_gdbm_slash_ndbm_h], [
+  AC_CHECK_HEADER(
+    [gdbm/ndbm.h],
+    [ac_cv_header_gdbm_slash_ndbm_h=yes], [ac_cv_header_gdbm_slash_ndbm_h=no]
+  )
+])
+AS_VAR_IF([ac_cv_header_gdbm_slash_ndbm_h], [yes], [
+  AC_DEFINE([HAVE_GDBM_NDBM_H], [1], [Define to 1 if you have the <gdbm/ndbm.h> header file.])
+])
+
+AS_UNSET([ac_cv_header_gdbm_ndbm_h])
+AC_CACHE_VAL([ac_cv_header_gdbm_dash_ndbm_h], [
+  AC_CHECK_HEADER(
+    [gdbm-ndbm.h],
+    [ac_cv_header_gdbm_dash_ndbm_h=yes], [ac_cv_header_gdbm_dash_ndbm_h=no]
+  )
+])
+AS_VAR_IF([ac_cv_header_gdbm_dash_ndbm_h], [yes], [
+  AC_DEFINE([HAVE_GDBM_DASH_NDBM_H], [1], [Define to 1 if you have the <gdbm-ndbm.h> header file.])
+])
+AS_UNSET([ac_cv_header_gdbm_ndbm_h])
+
+if test "$ac_cv_header_gdbm_slash_ndbm_h" = yes -o "$ac_cv_header_gdbm_dash_ndbm_h" = yes; then
+  LIBS_SAVE="$LIBS"
+  AC_CHECK_LIB([gdbm_compat], [dbm_open])
+  LIBS="$LIBS_SAVE"
+fi
+
+# Check for libdb >= 5 with dbm_open()
+# db.h re-defines the name of the function
+AC_CHECK_HEADERS([db.h], [
+  AC_CACHE_CHECK([for libdb], [ac_cv_have_libdb], [
+    LIBS_SAVE="$LIBS"
+    LIBS="$LIBS -ldb"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([
+      #define DB_DBM_HSEARCH 1
+      #include <db.h>
+      #if DB_VERSION_MAJOR < 5
+        #error "dh.h: DB_VERSION_MAJOR < 5 is not supported."
+      #endif
+      ], [DBM *dbm = dbm_open(NULL, 0, 0)])
+    ], [ac_cv_have_libdb=yes], [ac_cv_have_libdb=no])
+    LIBS="$LIBS_SAVE"
+  ])
+  AS_VAR_IF([ac_cv_have_libdb], [yes], [
+    AC_DEFINE([HAVE_LIBDB], [1], [Define to 1 if you have the `db' library (-ldb).])
+  ])
+])
+
 # Check for --with-dbmliborder
 AC_MSG_CHECKING(for --with-dbmliborder)
 AC_ARG_WITH(dbmliborder,
@@ -3120,12 +3199,15 @@ if test x$with_dbmliborder = xyes
 then
 AC_MSG_ERROR([proper usage is --with-dbmliborder=db1:db2:...])
 else
-  for db in `echo $with_dbmliborder | sed 's/:/ /g'`; do
+  as_save_IFS=$IFS
+  IFS=:
+  for db in $with_dbmliborder; do
     if test x$db != xndbm && test x$db != xgdbm && test x$db != xbdb
     then
       AC_MSG_ERROR([proper usage is --with-dbmliborder=db1:db2:...])
     fi
   done
+  IFS=$as_save_IFS
 fi])
 AC_MSG_RESULT($with_dbmliborder)
 
@@ -3247,8 +3329,7 @@ if test "$posix_threads" = "yes"; then
 		       ;;
       esac
 
-      AC_MSG_CHECKING(if PTHREAD_SCOPE_SYSTEM is supported)
-      AC_CACHE_VAL(ac_cv_pthread_system_supported,
+      AC_CACHE_CHECK([if PTHREAD_SCOPE_SYSTEM is supported], [ac_cv_pthread_system_supported],
       [AC_RUN_IFELSE([AC_LANG_SOURCE([[
       #include <stdio.h>
       #include <pthread.h>
@@ -3267,7 +3348,6 @@ if test "$posix_threads" = "yes"; then
       [ac_cv_pthread_system_supported=no],
       [ac_cv_pthread_system_supported=no])
       ])
-      AC_MSG_RESULT($ac_cv_pthread_system_supported)
       if test "$ac_cv_pthread_system_supported" = "yes"; then
         AC_DEFINE(PTHREAD_SYSTEM_SCHED_SUPPORTED, 1, [Defined if PTHREAD_SCOPE_SYSTEM supported.])
       fi
@@ -3991,8 +4071,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 ])
 
 AS_VAR_IF([ac_cv_func_getaddrinfo], [yes], [
-  AC_MSG_CHECKING(getaddrinfo bug)
-  AC_CACHE_VAL(ac_cv_buggy_getaddrinfo,
+  AC_CACHE_CHECK([getaddrinfo bug], [ac_cv_buggy_getaddrinfo],
   AC_RUN_IFELSE([AC_LANG_SOURCE([[[
 #include <stdio.h>
 #include <sys/types.h>
@@ -4095,8 +4174,6 @@ fi]))
 dnl if ac_cv_func_getaddrinfo
 ])
 
-AC_MSG_RESULT($ac_cv_buggy_getaddrinfo)
-
 if test "$ac_cv_func_getaddrinfo" = no -o "$ac_cv_buggy_getaddrinfo" = yes
 then
 	if test $ipv6 = yes
@@ -4133,48 +4210,40 @@ AC_CHECK_MEMBERS([struct passwd.pw_gecos, struct passwd.pw_passwd], [], [], [[
 # Issue #21085: In Cygwin, siginfo_t does not have si_band field.
 AC_CHECK_MEMBERS([siginfo_t.si_band], [], [], [[#include <signal.h>]])
 
-AC_MSG_CHECKING(for time.h that defines altzone)
-AC_CACHE_VAL(ac_cv_header_time_altzone,[
+AC_CACHE_CHECK([for time.h that defines altzone], [ac_cv_header_time_altzone], [
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[return altzone;]])],
     [ac_cv_header_time_altzone=yes],
     [ac_cv_header_time_altzone=no])
   ])
-AC_MSG_RESULT($ac_cv_header_time_altzone)
 if test $ac_cv_header_time_altzone = yes; then
   AC_DEFINE(HAVE_ALTZONE, 1, [Define this if your time.h defines altzone.])
 fi
 
-AC_MSG_CHECKING(for addrinfo)
-AC_CACHE_VAL(ac_cv_struct_addrinfo,
+AC_CACHE_CHECK([for addrinfo], [ac_cv_struct_addrinfo],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[struct addrinfo a]])],
   [ac_cv_struct_addrinfo=yes],
   [ac_cv_struct_addrinfo=no]))
-AC_MSG_RESULT($ac_cv_struct_addrinfo)
 if test $ac_cv_struct_addrinfo = yes; then
 	AC_DEFINE(HAVE_ADDRINFO, 1, [struct addrinfo (netdb.h)])
 fi
 
-AC_MSG_CHECKING(for sockaddr_storage)
-AC_CACHE_VAL(ac_cv_struct_sockaddr_storage,
+AC_CACHE_CHECK([for sockaddr_storage], [ac_cv_struct_sockaddr_storage],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #		include <sys/types.h>
 #		include <sys/socket.h>]], [[struct sockaddr_storage s]])],
   [ac_cv_struct_sockaddr_storage=yes],
   [ac_cv_struct_sockaddr_storage=no]))
-AC_MSG_RESULT($ac_cv_struct_sockaddr_storage)
 if test $ac_cv_struct_sockaddr_storage = yes; then
 	AC_DEFINE(HAVE_SOCKADDR_STORAGE, 1, [struct sockaddr_storage (sys/socket.h)])
 fi
 
-AC_MSG_CHECKING(for sockaddr_alg)
-AC_CACHE_VAL(ac_cv_struct_sockaddr_alg,
+AC_CACHE_CHECK([for sockaddr_alg], [ac_cv_struct_sockaddr_alg],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #		include <sys/types.h>
 #		include <sys/socket.h>
 #		include <linux/if_alg.h>]], [[struct sockaddr_alg s]])],
   [ac_cv_struct_sockaddr_alg=yes],
   [ac_cv_struct_sockaddr_alg=no]))
-AC_MSG_RESULT($ac_cv_struct_sockaddr_alg)
 if test $ac_cv_struct_sockaddr_alg = yes; then
 	AC_DEFINE(HAVE_SOCKADDR_ALG, 1, [struct sockaddr_alg (linux/if_alg.h)])
 fi
@@ -4496,8 +4565,7 @@ LIBS=$LIBS_SAVE
 # the kernel module that provides POSIX semaphores
 # isn't loaded by default, so an attempt to call
 # sem_open results in a 'Signal 12' error.
-AC_MSG_CHECKING(whether POSIX semaphores are enabled)
-AC_CACHE_VAL(ac_cv_posix_semaphores_enabled,
+AC_CACHE_CHECK([whether POSIX semaphores are enabled], [ac_cv_posix_semaphores_enabled],
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 #include <fcntl.h>
@@ -4520,7 +4588,6 @@ int main(void) {
 [ac_cv_posix_semaphores_enabled=no],
 [ac_cv_posix_semaphores_enabled=yes])
 )
-AC_MSG_RESULT($ac_cv_posix_semaphores_enabled)
 if test $ac_cv_posix_semaphores_enabled = no
 then
   AC_DEFINE(POSIX_SEMAPHORES_NOT_ENABLED, 1,
@@ -4528,8 +4595,7 @@ then
 fi
 
 # Multiprocessing check for broken sem_getvalue
-AC_MSG_CHECKING(for broken sem_getvalue)
-AC_CACHE_VAL(ac_cv_broken_sem_getvalue,
+AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 #include <fcntl.h>
@@ -4556,7 +4622,6 @@ int main(void){
 [ac_cv_broken_sem_getvalue=yes],
 [ac_cv_broken_sem_getvalue=yes])
 )
-AC_MSG_RESULT($ac_cv_broken_sem_getvalue)
 if test $ac_cv_broken_sem_getvalue = yes
 then
   AC_DEFINE(HAVE_BROKEN_SEM_GETVALUE, 1,
@@ -4615,8 +4680,7 @@ AC_MSG_RESULT($have_ucs4_tcl)
 if test "$wchar_h" = yes
 then
   # check whether wchar_t is signed or not
-  AC_MSG_CHECKING(whether wchar_t is signed)
-  AC_CACHE_VAL(ac_cv_wchar_t_signed, [
+  AC_CACHE_CHECK([whether wchar_t is signed], [ac_cv_wchar_t_signed], [
   AC_RUN_IFELSE([AC_LANG_SOURCE([[
   #include <wchar.h>
   int main()
@@ -4628,7 +4692,6 @@ then
   [ac_cv_wchar_t_signed=yes],
   [ac_cv_wchar_t_signed=no],
   [ac_cv_wchar_t_signed=yes])])
-  AC_MSG_RESULT($ac_cv_wchar_t_signed)
 fi
 
 AC_MSG_CHECKING(whether wchar_t is usable)
@@ -4766,8 +4829,7 @@ fi],
 
 # Check whether right shifting a negative integer extends the sign bit
 # or fills with zeros (like the Cray J90, according to Tim Peters).
-AC_MSG_CHECKING(whether right shift extends the sign bit)
-AC_CACHE_VAL(ac_cv_rshift_extends_sign, [
+AC_CACHE_CHECK([whether right shift extends the sign bit], [ac_cv_rshift_extends_sign], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 int main()
 {
@@ -4777,7 +4839,6 @@ int main()
 [ac_cv_rshift_extends_sign=yes],
 [ac_cv_rshift_extends_sign=no],
 [ac_cv_rshift_extends_sign=yes])])
-AC_MSG_RESULT($ac_cv_rshift_extends_sign)
 if test "$ac_cv_rshift_extends_sign" = no
 then
   AC_DEFINE(SIGNED_RIGHT_SHIFT_ZERO_FILLS, 1,
@@ -4786,15 +4847,13 @@ then
 fi
 
 # check for getc_unlocked and related locking functions
-AC_MSG_CHECKING(for getc_unlocked() and friends)
-AC_CACHE_VAL(ac_cv_have_getc_unlocked, [
+AC_CACHE_CHECK([for getc_unlocked() and friends], [ac_cv_have_getc_unlocked], [
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]], [[
 	FILE *f = fopen("/dev/null", "r");
 	flockfile(f);
 	getc_unlocked(f);
 	funlockfile(f);
 ]])],[ac_cv_have_getc_unlocked=yes],[ac_cv_have_getc_unlocked=no])])
-AC_MSG_RESULT($ac_cv_have_getc_unlocked)
 if test "$ac_cv_have_getc_unlocked" = yes
 then
   AC_DEFINE(HAVE_GETC_UNLOCKED, 1,
@@ -4923,8 +4982,7 @@ fi
 # End of readline checks: restore LIBS
 LIBS=$LIBS_no_readline
 
-AC_MSG_CHECKING(for broken nice())
-AC_CACHE_VAL(ac_cv_broken_nice, [
+AC_CACHE_CHECK([for broken nice()], [ac_cv_broken_nice], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <unistd.h>
@@ -4939,15 +4997,13 @@ int main()
 [ac_cv_broken_nice=yes],
 [ac_cv_broken_nice=no],
 [ac_cv_broken_nice=no])])
-AC_MSG_RESULT($ac_cv_broken_nice)
 if test "$ac_cv_broken_nice" = yes
 then
   AC_DEFINE(HAVE_BROKEN_NICE, 1,
   [Define if nice() returns success/failure instead of the new priority.])
 fi
 
-AC_MSG_CHECKING(for broken poll())
-AC_CACHE_VAL(ac_cv_broken_poll,
+AC_CACHE_CHECK([for broken poll()], [ac_cv_broken_poll],
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <poll.h>
 #include <unistd.h>
@@ -4971,7 +5027,6 @@ int main()
 [ac_cv_broken_poll=yes],
 [ac_cv_broken_poll=no],
 [ac_cv_broken_poll=no]))
-AC_MSG_RESULT($ac_cv_broken_poll)
 if test "$ac_cv_broken_poll" = yes
 then
   AC_DEFINE(HAVE_BROKEN_POLL, 1,
@@ -4979,8 +5034,7 @@ then
 fi
 
 # check tzset(3) exists and works like we expect it to
-AC_MSG_CHECKING(for working tzset())
-AC_CACHE_VAL(ac_cv_working_tzset, [
+AC_CACHE_CHECK([for working tzset()], [ac_cv_working_tzset], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <time.h>
@@ -5048,7 +5102,6 @@ int main()
 [ac_cv_working_tzset=yes],
 [ac_cv_working_tzset=no],
 [ac_cv_working_tzset=no])])
-AC_MSG_RESULT($ac_cv_working_tzset)
 if test "$ac_cv_working_tzset" = yes
 then
   AC_DEFINE(HAVE_WORKING_TZSET, 1,
@@ -5056,15 +5109,13 @@ then
 fi
 
 # Look for subsecond timestamps in struct stat
-AC_MSG_CHECKING(for tv_nsec in struct stat)
-AC_CACHE_VAL(ac_cv_stat_tv_nsec,
+AC_CACHE_CHECK([for tv_nsec in struct stat], [ac_cv_stat_tv_nsec],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]], [[
 struct stat st;
 st.st_mtim.tv_nsec = 1;
 ]])],
 [ac_cv_stat_tv_nsec=yes],
 [ac_cv_stat_tv_nsec=no]))
-AC_MSG_RESULT($ac_cv_stat_tv_nsec)
 if test "$ac_cv_stat_tv_nsec" = yes
 then
   AC_DEFINE(HAVE_STAT_TV_NSEC, 1,
@@ -5072,15 +5123,13 @@ then
 fi
 
 # Look for BSD style subsecond timestamps in struct stat
-AC_MSG_CHECKING(for tv_nsec2 in struct stat)
-AC_CACHE_VAL(ac_cv_stat_tv_nsec2,
+AC_CACHE_CHECK([for tv_nsec2 in struct stat], [ac_cv_stat_tv_nsec2],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]], [[
 struct stat st;
 st.st_mtimespec.tv_nsec = 1;
 ]])],
 [ac_cv_stat_tv_nsec2=yes],
 [ac_cv_stat_tv_nsec2=no]))
-AC_MSG_RESULT($ac_cv_stat_tv_nsec2)
 if test "$ac_cv_stat_tv_nsec2" = yes
 then
   AC_DEFINE(HAVE_STAT_TV_NSEC2, 1,
@@ -5103,15 +5152,13 @@ AC_CHECK_HEADERS(term.h,,,[
 ])
 
 # On HP/UX 11.0, mvwdelch is a block with a return statement
-AC_MSG_CHECKING(whether mvwdelch is an expression)
-AC_CACHE_VAL(ac_cv_mvwdelch_is_expression,
+AC_CACHE_CHECK([whether mvwdelch is an expression], [ac_cv_mvwdelch_is_expression],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[
   int rtn;
   rtn = mvwdelch(0,0,0);
 ]])],
 [ac_cv_mvwdelch_is_expression=yes],
 [ac_cv_mvwdelch_is_expression=no]))
-AC_MSG_RESULT($ac_cv_mvwdelch_is_expression)
 
 if test "$ac_cv_mvwdelch_is_expression" = yes
 then
@@ -5123,8 +5170,7 @@ fi
 # structs since version 5.7.  If the macro is defined as zero before including
 # [n]curses.h, ncurses will expose fields of the structs regardless of the
 # configuration.
-AC_MSG_CHECKING(whether WINDOW has _flags)
-AC_CACHE_VAL(ac_cv_window_has_flags,
+AC_CACHE_CHECK([whether WINDOW has _flags], [ac_cv_window_has_flags],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   #define NCURSES_OPAQUE 0
   #include <curses.h>
@@ -5134,7 +5180,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 ]])],
 [ac_cv_window_has_flags=yes],
 [ac_cv_window_has_flags=no]))
-AC_MSG_RESULT($ac_cv_window_has_flags)
 
 
 if test "$ac_cv_window_has_flags" = yes
@@ -5270,8 +5315,7 @@ AC_CHECK_TYPE(socklen_t,,
 #endif
 ])
 
-AC_MSG_CHECKING(for broken mbstowcs)
-AC_CACHE_VAL(ac_cv_broken_mbstowcs,
+AC_CACHE_CHECK([for broken mbstowcs], [ac_cv_broken_mbstowcs],
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include<stdlib.h>
@@ -5285,7 +5329,6 @@ int main() {
 [ac_cv_broken_mbstowcs=no],
 [ac_cv_broken_mbstowcs=yes],
 [ac_cv_broken_mbstowcs=no]))
-AC_MSG_RESULT($ac_cv_broken_mbstowcs)
 if test "$ac_cv_broken_mbstowcs" = yes
 then
   AC_DEFINE(HAVE_BROKEN_MBSTOWCS, 1,
@@ -5314,8 +5357,7 @@ fi
 ],
 [AC_MSG_RESULT(no value specified)])
 
-AC_MSG_CHECKING(whether $CC supports computed gotos)
-AC_CACHE_VAL(ac_cv_computed_gotos,
+AC_CACHE_CHECK([whether $CC supports computed gotos], [ac_cv_computed_gotos],
 AC_RUN_IFELSE([AC_LANG_SOURCE([[[
 int main(int argc, char **argv)
 {
@@ -5335,7 +5377,6 @@ LABEL2:
  else
    ac_cv_computed_gotos=no
  fi]))
-AC_MSG_RESULT($ac_cv_computed_gotos)
 case "$ac_cv_computed_gotos" in yes*)
   AC_DEFINE(HAVE_COMPUTED_GOTOS, 1,
   [Define if the C compiler supports computed gotos.])
@@ -5371,7 +5412,8 @@ SRCDIRS="\
   Objects \
   Parser \
   Programs \
-  Python"
+  Python \
+  Python/deepfreeze"
 AC_MSG_CHECKING(for build directories)
 for dir in $SRCDIRS; do
     if test ! -d $dir; then
