@@ -7,15 +7,15 @@ Subject: setup-modules
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index 39dc39d..4511661 100644
+index 608866d..4511661 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
 @@ -172,8 +172,8 @@ time timemodule.c
  #select selectmodule.c
  
  # XML
--#_elementtree -I$(srcdir)/Modules/expat _elementtree.c
--#pyexpat -I$(srcdir)/Modules/expat  expat/xmlparse.c expat/xmlrole.c expat/xmltok.c pyexpat.c
+-#_elementtree _elementtree.c $(EXPAT_CFLAGS)
+-#pyexpat pyexpat.c $(EXPAT_CFLAGS) $(EXPAT_LDFLAGS)
 +#_elementtree _elementtree.c -lexpat    # elementtree accelerator
 +#pyexpat pyexpat.c -lexpat
  
