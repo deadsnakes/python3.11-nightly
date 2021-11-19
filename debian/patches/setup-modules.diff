@@ -7,21 +7,21 @@ Subject: setup-modules
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/Modules/Setup b/Modules/Setup
-index 608866d..4511661 100644
+index 414c6af..30cef82 100644
 --- a/Modules/Setup
 +++ b/Modules/Setup
-@@ -172,8 +172,8 @@ time timemodule.c
+@@ -181,8 +181,8 @@ time timemodule.c
  #select selectmodule.c
  
  # XML
--#_elementtree _elementtree.c $(EXPAT_CFLAGS)
--#pyexpat pyexpat.c $(EXPAT_CFLAGS) $(EXPAT_LDFLAGS)
+-#_elementtree _elementtree.c
+-#pyexpat pyexpat.c
 +#_elementtree _elementtree.c -lexpat    # elementtree accelerator
 +#pyexpat pyexpat.c -lexpat
  
  # hashing builtins
  #_blake2 _blake2/blake2module.c _blake2/blake2b_impl.c _blake2/blake2s_impl.c
-@@ -213,7 +213,7 @@ time timemodule.c
+@@ -222,7 +222,7 @@ time timemodule.c
  # Modules that require external libraries.
  
  #_bz2 _bz2module.c -lbz2
@@ -30,7 +30,7 @@ index 608866d..4511661 100644
  # The _dbm module supports NDBM, GDBM with compat module, and Berkeley DB.
  #_dbm _dbmmodule.c -lgdbm_compat -DUSE_GDBM_COMPAT
  #_gdbm _gdbmmodule.c -lgdbm
-@@ -227,8 +227,8 @@ time timemodule.c
+@@ -236,8 +236,8 @@ time timemodule.c
  #readline readline.c -lreadline -ltermcap
  
  # OpenSSL bindings
