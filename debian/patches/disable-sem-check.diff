@@ -5,19 +5,25 @@ Subject: disable-sem-check
 # DP: Assume working semaphores, don't rely on running kernel for the check.
 # DP: Assume working semaphores, don't rely on running kernel for the check.
 ---
- configure.ac | 18 ++++++++++++++----
- 1 file changed, 14 insertions(+), 4 deletions(-)
+ configure.ac | 32 ++++++++++++++++++++------------
+ 1 file changed, 20 insertions(+), 12 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index e1336a3..deba75f 100644
+index d347cf9..79ec5fd 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4680,8 +4680,13 @@ int main(void) {
+@@ -4940,12 +4940,16 @@ AC_CACHE_CHECK([whether POSIX semaphores are enabled], [ac_cv_posix_semaphores_e
+   [ac_cv_posix_semaphores_enabled=no],
+   [ac_cv_posix_semaphores_enabled=yes])
  )
- if test $ac_cv_posix_semaphores_enabled = no
- then
--  AC_DEFINE(POSIX_SEMAPHORES_NOT_ENABLED, 1,
--            [Define if POSIX semaphores aren't enabled on your system])
+-AS_VAR_IF([ac_cv_posix_semaphores_enabled], [no], [
+-  AC_DEFINE(
+-    [POSIX_SEMAPHORES_NOT_ENABLED], [1],
+-    [Define if POSIX semaphores aren't enabled on your system]
+-  )
+-])
++if test $ac_cv_posix_semaphores_enabled = no
++then
 +  case $ac_sys_system in
 +    Linux*) # assume yes, see https://launchpad.net/bugs/630511
 +      ;;
@@ -25,15 +31,22 @@ index e1336a3..deba75f 100644
 +      AC_DEFINE(POSIX_SEMAPHORES_NOT_ENABLED, 1,
 +                [Define if POSIX semaphores aren't enabled on your system])
 +  esac
- fi
++fi
  
- # Multiprocessing check for broken sem_getvalue
-@@ -4714,8 +4719,13 @@ int main(void){
+ dnl Multiprocessing check for broken sem_getvalue
+ AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
+@@ -4977,12 +4981,16 @@ AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
+   [ac_cv_broken_sem_getvalue=yes],
+   [ac_cv_broken_sem_getvalue=yes])
  )
- if test $ac_cv_broken_sem_getvalue = yes
- then
--  AC_DEFINE(HAVE_BROKEN_SEM_GETVALUE, 1,
--  [define to 1 if your sem_getvalue is broken.])
+-AS_VAR_IF([ac_cv_broken_sem_getvalue], [yes], [
+-  AC_DEFINE(
+-    [HAVE_BROKEN_SEM_GETVALUE], [1],
+-    [define to 1 if your sem_getvalue is broken.]
+-  )
+-])
++if test $ac_cv_broken_sem_getvalue = yes
++then
 +  case $ac_sys_system in
 +    Linux*) # assume yes, see https://launchpad.net/bugs/630511
 +      ;;
@@ -41,6 +54,7 @@ index e1336a3..deba75f 100644
 +      AC_DEFINE(HAVE_BROKEN_SEM_GETVALUE, 1,
 +      [define to 1 if your sem_getvalue is broken.])
 +  esac
- fi
++fi
  
  AC_CHECK_DECLS([RTLD_LAZY, RTLD_NOW, RTLD_GLOBAL, RTLD_LOCAL, RTLD_NODELETE, RTLD_NOLOAD, RTLD_DEEPBIND, RTLD_MEMBER], [], [], [[#include <dlfcn.h>]])
+ 
