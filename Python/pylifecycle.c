@@ -1676,6 +1676,7 @@ finalize_interp_types(PyInterpreterState *interp)
     _PyThread_FiniType(interp);
     _PyErr_FiniTypes(interp);
     _PyTypes_Fini(interp);
+    _PyTypes_FiniTypes(interp);
 
     // Call _PyUnicode_ClearInterned() before _PyDict_Fini() since it uses
     // a dict internally.
@@ -1862,12 +1863,6 @@ Py_FinalizeEx(void)
     /* dump hash stats */
     _PyHash_Fini();
 
-#ifdef Py_REF_DEBUG
-    if (show_ref_count) {
-        _PyDebug_PrintTotalRefs();
-    }
-#endif
-
 #ifdef Py_TRACE_REFS
     /* Display all objects still alive -- this can invoke arbitrary
      * __repr__ overrides, so requires a mostly-intact interpreter.
@@ -1894,6 +1889,12 @@ Py_FinalizeEx(void)
 
     finalize_interp_clear(tstate);
     finalize_interp_delete(tstate->interp);
+
+#ifdef Py_REF_DEBUG
+    if (show_ref_count) {
+        _PyDebug_PrintTotalRefs();
+    }
+#endif
 
 #ifdef Py_TRACE_REFS
     /* Display addresses (& refcnts) of all objects still alive.
