@@ -185,7 +185,7 @@ index bb860c8..c13a1df 100644
              wanted.append('foo.%s.pyc' % sys.implementation.cache_tag)
          self.assertEqual(contents, sorted(wanted))
 diff --git a/Lib/distutils/tests/test_install.py b/Lib/distutils/tests/test_install.py
-index b2a3887..2a28fd4 100644
+index c38f98b..12d021f 100644
 --- a/Lib/distutils/tests/test_install.py
 +++ b/Lib/distutils/tests/test_install.py
 @@ -205,7 +205,7 @@ def test_record(self):
@@ -196,8 +196,8 @@ index b2a3887..2a28fd4 100644
 +                    'UNKNOWN-0.0.0.egg-info']
          self.assertEqual(found, expected)
  
-     def test_record_extensions(self):
-@@ -238,7 +238,7 @@ def test_record_extensions(self):
+     @requires_subprocess()
+@@ -239,7 +239,7 @@ def test_record_extensions(self):
  
          found = [os.path.basename(line) for line in content.splitlines()]
          expected = [_make_ext_name('xx'),
@@ -333,10 +333,10 @@ index ef335c6..274bed1 100644
  
  def get_preferred_scheme(key):
 diff --git a/Lib/test/test_site.py b/Lib/test/test_site.py
-index c54d868..8128bcf 100644
+index 032a1be..3f62e14 100644
 --- a/Lib/test/test_site.py
 +++ b/Lib/test/test_site.py
-@@ -285,16 +285,16 @@ def test_getsitepackages(self):
+@@ -286,16 +286,16 @@ def test_getsitepackages(self):
          if os.sep == '/':
              # OS X, Linux, FreeBSD, etc
              if sys.platlibdir != "lib":
