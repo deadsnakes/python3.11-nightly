@@ -173,7 +173,7 @@ def _type_check(arg, msg, is_argument=True, module=None, *, allow_special_forms=
     if (isinstance(arg, _GenericAlias) and
             arg.__origin__ in invalid_generic_forms):
         raise TypeError(f"{arg} is not valid as type argument")
-    if arg in (Any, NoReturn, Final):
+    if arg in (Any, NoReturn, ClassVar, Final):
         return arg
     if isinstance(arg, _SpecialForm) or arg in (Generic, Protocol):
         raise TypeError(f"Plain {arg} is not valid as type argument")
@@ -867,7 +867,7 @@ class ParamSpec(_Final, _Immutable, _TypeVarLike, _root=True):
     type checkers.  They are used to forward the parameter types of one
     callable to another callable, a pattern commonly found in higher order
     functions and decorators.  They are only valid when used in ``Concatenate``,
-    or s the first argument to ``Callable``, or as parameters for user-defined
+    or as the first argument to ``Callable``, or as parameters for user-defined
     Generics.  See class Generic for more information on generic types.  An
     example for annotating a decorator::
 
