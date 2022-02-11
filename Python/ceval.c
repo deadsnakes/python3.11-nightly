@@ -1615,7 +1615,9 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, InterpreterFrame *frame, int thr
 
     CFrame cframe;
     CallShape call_shape;
-    call_shape.kwnames = NULL; // Borrowed reference
+    call_shape.kwnames = NULL; // Borrowed reference. Reset by CALL instructions.
+    /* The following three values are always set by the PRECALL instructions.
+       They are set here to keep the compiler happy. */
     call_shape.postcall_shrink = 0;
     call_shape.total_args = 0;
     call_shape.callable = NULL; // Strong reference
@@ -1732,9 +1734,6 @@ handle_eval_breaker:
         }
 
         TARGET(RESUME) {
-            assert(tstate->cframe == &cframe);
-            assert(frame == cframe.current_frame);
-
             int err = _Py_IncrementCountAndMaybeQuicken(frame->f_code);
             if (err) {
                 if (err < 0) {
@@ -1745,6 +1744,13 @@ handle_eval_breaker:
                 first_instr = frame->f_code->co_firstinstr;
                 next_instr = first_instr + nexti;
             }
+            JUMP_TO_INSTRUCTION(RESUME_QUICK);
+        }
+
+        TARGET(RESUME_QUICK) {
+            PREDICTED(RESUME_QUICK);
+            assert(tstate->cframe == &cframe);
+            assert(frame == cframe.current_frame);
             frame->f_state = FRAME_EXECUTING;
             if (_Py_atomic_load_relaxed(eval_breaker) && oparg < 2) {
                 goto handle_eval_breaker;
@@ -4002,7 +4008,6 @@ handle_eval_breaker:
 
         TARGET(JUMP_ABSOLUTE) {
             PREDICTED(JUMP_ABSOLUTE);
-            assert(oparg < INSTR_OFFSET());
             int err = _Py_IncrementCountAndMaybeQuicken(frame->f_code);
             if (err) {
                 if (err < 0) {
@@ -4013,9 +4018,7 @@ handle_eval_breaker:
                 first_instr = frame->f_code->co_firstinstr;
                 next_instr = first_instr + nexti;
             }
-            JUMPTO(oparg);
-            CHECK_EVAL_BREAKER();
-            DISPATCH();
+            JUMP_TO_INSTRUCTION(JUMP_ABSOLUTE_QUICK);
         }
 
         TARGET(JUMP_NO_INTERRUPT) {
@@ -4030,6 +4033,7 @@ handle_eval_breaker:
         }
 
         TARGET(JUMP_ABSOLUTE_QUICK) {
+            PREDICTED(JUMP_ABSOLUTE_QUICK);
             assert(oparg < INSTR_OFFSET());
             JUMPTO(oparg);
             CHECK_EVAL_BREAKER();
@@ -4446,7 +4450,15 @@ handle_eval_breaker:
             call_shape.postcall_shrink = 1;
 
             call_shape.total_args = oparg;
-            call_shape.kwnames = NULL;
+            assert(call_shape.kwnames == NULL);
+#ifdef Py_STATS
+            extern int _PySpecialization_ClassifyCallable(PyObject *);
+            SpecializationStats *stats =
+                &_py_stats.opcode_stats[PRECALL_FUNCTION].specialization;
+            stats->failure++;
+            int kind = _PySpecialization_ClassifyCallable(call_shape.callable);
+            stats->failure_kinds[kind]++;
+#endif
             DISPATCH();
         }
 
@@ -4485,12 +4497,19 @@ handle_eval_breaker:
             call_shape.postcall_shrink = 2-is_method;
 
             call_shape.total_args = nargs;
-            call_shape.kwnames = NULL;
+            assert(call_shape.kwnames == NULL);
+#ifdef Py_STATS
+            extern int _PySpecialization_ClassifyCallable(PyObject *);
+            SpecializationStats *stats =
+                &_py_stats.opcode_stats[PRECALL_METHOD].specialization;
+            stats->failure++;
+            int kind = _PySpecialization_ClassifyCallable(call_shape.callable);
+            stats->failure_kinds[kind]++;
+#endif
             DISPATCH();
         }
 
         TARGET(KW_NAMES) {
-            assert(call_shape.kwnames == NULL);
             assert(oparg < PyTuple_GET_SIZE(consts));
             call_shape.kwnames = GETITEM(consts, oparg);
             DISPATCH();
@@ -4526,6 +4545,7 @@ handle_eval_breaker:
                     tstate, (PyFunctionObject *)function, locals,
                     stack_pointer, positional_args, call_shape.kwnames
                 );
+                call_shape.kwnames = NULL;
                 STACK_SHRINK(call_shape.postcall_shrink);
                 // The frame has stolen all the arguments from the stack,
                 // so there is no need to clean them up.
@@ -4551,6 +4571,7 @@ handle_eval_breaker:
                     positional_args | PY_VECTORCALL_ARGUMENTS_OFFSET,
                     call_shape.kwnames);
             }
+            call_shape.kwnames = NULL;
             assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
             Py_DECREF(function);
             /* Clear the stack */
@@ -4592,6 +4613,7 @@ handle_eval_breaker:
         }
 
         TARGET(CALL_PY_EXACT_ARGS) {
+            assert(call_shape.kwnames == NULL);
             SpecializedCacheEntry *caches = GET_CACHE();
             int argcount = call_shape.total_args;
             DEOPT_IF(!PyFunction_Check(call_shape.callable), CALL);
@@ -4620,6 +4642,7 @@ handle_eval_breaker:
         }
 
         TARGET(CALL_PY_WITH_DEFAULTS) {
+            assert(call_shape.kwnames == NULL);
             SpecializedCacheEntry *caches = GET_CACHE();
             int argcount = call_shape.total_args;
             DEOPT_IF(!PyFunction_Check(call_shape.callable), CALL);
@@ -4656,9 +4679,9 @@ handle_eval_breaker:
         }
 
         TARGET(CALL_NO_KW_TYPE_1) {
+            assert(call_shape.kwnames == NULL);
             assert(cframe.use_tracing == 0);
             DEOPT_IF(call_shape.total_args != 1, CALL);
-            assert(call_shape.kwnames == NULL);
             PyObject *obj = TOP();
             PyObject *callable = SECOND();
             DEOPT_IF(callable != (PyObject *)&PyType_Type, CALL);
@@ -4671,13 +4694,13 @@ handle_eval_breaker:
         }
 
         TARGET(CALL_NO_KW_STR_1) {
+            assert(call_shape.kwnames == NULL);
             assert(cframe.use_tracing == 0);
             DEOPT_IF(!PyType_Check(call_shape.callable), CALL);
             PyTypeObject *tp = (PyTypeObject *)call_shape.callable;
             DEOPT_IF(call_shape.total_args != 1, CALL);
             DEOPT_IF(tp != &PyUnicode_Type, CALL);
             STAT_INC(CALL, hit);
-            assert(call_shape.kwnames == NULL);
             PyObject *arg = TOP();
             PyObject *res = PyObject_Str(arg);
             Py_DECREF(arg);
@@ -4691,12 +4714,12 @@ handle_eval_breaker:
         }
 
         TARGET(CALL_NO_KW_TUPLE_1) {
+            assert(call_shape.kwnames == NULL);
             DEOPT_IF(!PyType_Check(call_shape.callable), CALL);
             PyTypeObject *tp = (PyTypeObject *)call_shape.callable;
             DEOPT_IF(call_shape.total_args != 1, CALL);
             DEOPT_IF(tp != &PyTuple_Type, CALL);
             STAT_INC(CALL, hit);
-            assert(call_shape.kwnames == NULL);
             PyObject *arg = TOP();
             PyObject *res = PySequence_Tuple(arg);
             Py_DECREF(arg);
@@ -4719,6 +4742,7 @@ handle_eval_breaker:
             int nargs = call_shape.total_args - kwnames_len;
             STACK_SHRINK(call_shape.total_args);
             PyObject *res = tp->tp_vectorcall((PyObject *)tp, stack_pointer, nargs, call_shape.kwnames);
+            call_shape.kwnames = NULL;
             /* Free the arguments. */
             for (int i = 0; i < call_shape.total_args; i++) {
                 Py_DECREF(stack_pointer[i]);
@@ -4828,6 +4852,7 @@ handle_eval_breaker:
                 call_shape.kwnames
             );
             assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
+            call_shape.kwnames = NULL;
 
             /* Free the arguments. */
             for (int i = 0; i < call_shape.total_args; i++) {
@@ -5393,6 +5418,7 @@ unbound_local_error:
         }
 
 error:
+        call_shape.kwnames = NULL;
         /* Double-check exception status. */
 #ifdef NDEBUG
         if (!_PyErr_Occurred(tstate)) {
@@ -7454,7 +7480,7 @@ _Py_GetDXProfile(PyObject *self, PyObject *args)
     int i;
     PyObject *l = PyList_New(257);
     if (l == NULL) return NULL;
-    for (i = 0; i < 257; i++) {
+    for (i = 0; i < 256; i++) {
         PyObject *x = getarray(_py_stats.opcode_stats[i].pair_count);
         if (x == NULL) {
             Py_DECREF(l);
@@ -7462,6 +7488,22 @@ _Py_GetDXProfile(PyObject *self, PyObject *args)
         }
         PyList_SET_ITEM(l, i, x);
     }
+    PyObject *counts = PyList_New(256);
+    if (counts == NULL) {
+        Py_DECREF(l);
+        return NULL;
+    }
+    for (i = 0; i < 256; i++) {
+        PyObject *x = PyLong_FromUnsignedLongLong(
+            _py_stats.opcode_stats[i].execution_count);
+        if (x == NULL) {
+            Py_DECREF(counts);
+            Py_DECREF(l);
+            return NULL;
+        }
+        PyList_SET_ITEM(counts, i, x);
+    }
+    PyList_SET_ITEM(l, 256, counts);
     return l;
 }
 
