@@ -1762,7 +1762,7 @@ float___getformat___impl(PyTypeObject *type, const char *typestr)
 
 /*[clinic input]
 @classmethod
-float.__set_format__
+float.__setformat__
 
     typestr: str
         Must be 'double' or 'float'.
@@ -1781,9 +1781,9 @@ This affects how floats are converted to and from binary strings.
 [clinic start generated code]*/
 
 static PyObject *
-float___set_format___impl(PyTypeObject *type, const char *typestr,
-                          const char *fmt)
-/*[clinic end generated code: output=504460f5dc85acbd input=5306fa2b81a997e4]*/
+float___setformat___impl(PyTypeObject *type, const char *typestr,
+                         const char *fmt)
+/*[clinic end generated code: output=06864de1fb5f1f04 input=c0e9e04dd87f9988]*/
 {
     float_format_type f;
     float_format_type detected;
@@ -1885,7 +1885,7 @@ static PyMethodDef float_methods[] = {
     FLOAT_IS_INTEGER_METHODDEF
     FLOAT___GETNEWARGS___METHODDEF
     FLOAT___GETFORMAT___METHODDEF
-    FLOAT___SET_FORMAT___METHODDEF
+    FLOAT___SETFORMAT___METHODDEF
     FLOAT___FORMAT___METHODDEF
     {NULL,              NULL}           /* sentinel */
 };
@@ -2486,15 +2486,7 @@ _PyFloat_Unpack2(const unsigned char *p, int le)
         }
         else {
             /* NaN */
-#ifdef Py_NAN
             return sign ? -Py_NAN : Py_NAN;
-#else
-            PyErr_SetString(
-                PyExc_ValueError,
-                "can't unpack IEEE 754 NaN "
-                "on platform that does not support NaNs");
-            return -1;
-#endif  // !defined(Py_NAN)
         }
 #else  // _PY_SHORT_FLOAT_REPR == 1
         if (f == 0) {
