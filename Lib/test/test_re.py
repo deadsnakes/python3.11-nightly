@@ -5,6 +5,7 @@ import locale
 import re
 import sre_compile
 import string
+import time
 import unittest
 import warnings
 from re import Scanner
@@ -2038,9 +2039,23 @@ class ReTests(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "got 'type'"):
             re.search("x*", type)
 
-    def test_possessive_qualifiers(self):
-        """Test Possessive Qualifiers
-        Test qualifiers of the form @+ for some repetition operator @,
+    def test_search_anchor_at_beginning(self):
+        s = 'x'*10**7
+        start = time.perf_counter()
+        for p in r'\Ay', r'^y':
+            self.assertIsNone(re.search(p, s))
+            self.assertEqual(re.split(p, s), [s])
+            self.assertEqual(re.findall(p, s), [])
+            self.assertEqual(list(re.finditer(p, s)), [])
+            self.assertEqual(re.sub(p, '', s), s)
+        t = time.perf_counter() - start
+        # Without optimization it takes 1 second on my computer.
+        # With optimization -- 0.0003 seconds.
+        self.assertLess(t, 0.1)
+
+    def test_possessive_quantifiers(self):
+        """Test Possessive Quantifiers
+        Test quantifiers of the form @+ for some repetition operator @,
         e.g. x{3,5}+ meaning match from 3 to 5 greadily and proceed
         without creating a stack frame for rolling the stack back and
         trying 1 or more fewer matches."""
@@ -2077,7 +2092,7 @@ class ReTests(unittest.TestCase):
         self.assertIsNone(re.match("^x{}+$", "xxx"))
         self.assertTrue(re.match("^x{}+$", "x{}"))
 
-    def test_fullmatch_possessive_qualifiers(self):
+    def test_fullmatch_possessive_quantifiers(self):
         self.assertTrue(re.fullmatch(r'a++', 'a'))
         self.assertTrue(re.fullmatch(r'a*+', 'a'))
         self.assertTrue(re.fullmatch(r'a?+', 'a'))
@@ -2096,7 +2111,7 @@ class ReTests(unittest.TestCase):
         self.assertIsNone(re.fullmatch(r'(?:ab)?+', 'abc'))
         self.assertIsNone(re.fullmatch(r'(?:ab){1,3}+', 'abc'))
 
-    def test_findall_possessive_qualifiers(self):
+    def test_findall_possessive_quantifiers(self):
         self.assertEqual(re.findall(r'a++', 'aab'), ['aa'])
         self.assertEqual(re.findall(r'a*+', 'aab'), ['aa', '', ''])
         self.assertEqual(re.findall(r'a?+', 'aab'), ['a', 'a', '', ''])
