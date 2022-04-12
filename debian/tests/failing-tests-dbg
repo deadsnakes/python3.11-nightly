@@ -16,22 +16,24 @@ if [ "$(whoami)" = root ]; then
   fi
 fi
 
-tmphome=$ADTTMP/home
+tmphome=$AUTOPKGTEST_TMP/home
 mkdir -p $tmphome/.local/lib/python3.11/site-packages
 if [ -n "$su_user" ]; then
-  chmod go+rx $ADTTMP
+  chmod go+rx $AUTOPKGTEST_TMP
   chown $su_user:nogroup $tmphome
 fi
-ls -la $ADTTMP
+ls -la $AUTOPKGTEST_TMP
 
 debian_dir=$(dirname $(dirname $0))
 
 # no root access needed after this point
 
-TESTPYTHON="python3.11dm -W default -bb -E -R -m test"
+TESTPYTHON="python3.11d -W default -bb -E -R -m test"
 TESTEXCLUSIONS=""
 
 . $debian_dir/tests/test-common.sh
+
+TESTOPTS="$TESTOPTS --timeout=7200"
 
 if [ "$su_user" = nobody ]; then
   log=/dev/null
