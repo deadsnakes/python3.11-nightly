@@ -5,14 +5,14 @@ Subject: disable-sem-check
 # DP: Assume working semaphores, don't rely on running kernel for the check.
 # DP: Assume working semaphores, don't rely on running kernel for the check.
 ---
- configure.ac | 32 ++++++++++++++++++++------------
- 1 file changed, 20 insertions(+), 12 deletions(-)
+ configure.ac | 34 ++++++++++++++++++++++------------
+ 1 file changed, 22 insertions(+), 12 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 8a2bffc..5ab4c35 100644
+index e834ebb..fc82e69 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5273,12 +5273,16 @@ AC_CACHE_CHECK([whether POSIX semaphores are enabled], [ac_cv_posix_semaphores_e
+@@ -5273,12 +5273,17 @@ AC_CACHE_CHECK([whether POSIX semaphores are enabled], [ac_cv_posix_semaphores_e
    [ac_cv_posix_semaphores_enabled=no],
    [ac_cv_posix_semaphores_enabled=yes])
  )
@@ -22,6 +22,7 @@ index 8a2bffc..5ab4c35 100644
 -    [Define if POSIX semaphores aren't enabled on your system]
 -  )
 -])
++AC_MSG_RESULT($ac_cv_posix_semaphores_enabled)
 +if test $ac_cv_posix_semaphores_enabled = no
 +then
 +  case $ac_sys_system in
@@ -35,7 +36,7 @@ index 8a2bffc..5ab4c35 100644
  
  dnl Multiprocessing check for broken sem_getvalue
  AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
-@@ -5310,12 +5314,16 @@ AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
+@@ -5310,12 +5315,17 @@ AC_CACHE_CHECK([for broken sem_getvalue], [ac_cv_broken_sem_getvalue],
    [ac_cv_broken_sem_getvalue=yes],
    [ac_cv_broken_sem_getvalue=yes])
  )
@@ -45,6 +46,7 @@ index 8a2bffc..5ab4c35 100644
 -    [define to 1 if your sem_getvalue is broken.]
 -  )
 -])
++AC_MSG_RESULT($ac_cv_broken_sem_getvalue)
 +if test $ac_cv_broken_sem_getvalue = yes
 +then
 +  case $ac_sys_system in
