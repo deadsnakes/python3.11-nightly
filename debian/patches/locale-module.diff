@@ -13,7 +13,7 @@ Subject: locale-module
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/Lib/locale.py b/Lib/locale.py
-index 496cc80..15c73e5 100644
+index 170e5ee..fd9e231 100644
 --- a/Lib/locale.py
 +++ b/Lib/locale.py
 @@ -1422,8 +1422,8 @@ def getpreferredencoding(do_setlocale=True):
