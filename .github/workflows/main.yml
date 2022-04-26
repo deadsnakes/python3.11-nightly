@@ -32,6 +32,7 @@ jobs:
         include:
         - name: bionic
         - name: focal
+        - name: jammy
     env:
       DEBEMAIL: 'asottile+deadsnakes@umich.edu'
       DEBFULLNAME: 'Anthony Sottile (deadsnakes)'
