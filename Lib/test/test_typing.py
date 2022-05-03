@@ -4876,6 +4876,17 @@ class GetTypeHintTests(BaseTestCase):
             'a': Annotated[Required[int], "a", "b", "c"]
         })
 
+    def test_get_type_hints_collections_abc_callable(self):
+        # https://github.com/python/cpython/issues/91621
+        P = ParamSpec('P')
+        def f(x: collections.abc.Callable[[int], int]): ...
+        def g(x: collections.abc.Callable[..., int]): ...
+        def h(x: collections.abc.Callable[P, int]): ...
+
+        self.assertEqual(get_type_hints(f), {'x': collections.abc.Callable[[int], int]})
+        self.assertEqual(get_type_hints(g), {'x': collections.abc.Callable[..., int]})
+        self.assertEqual(get_type_hints(h), {'x': collections.abc.Callable[P, int]})
+
 
 class GetUtilitiesTestCase(TestCase):
     def test_get_origin(self):
@@ -5678,6 +5689,45 @@ class NamedTupleTests(BaseTestCase):
         with self.assertRaises(TypeError):
             class X(NamedTuple, A):
                 x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, tuple):
+                x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, NamedTuple):
+                x: int
+        class A(NamedTuple):
+            x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, A):
+                y: str
+
+    def test_generic(self):
+        class X(NamedTuple, Generic[T]):
+            x: T
+        self.assertEqual(X.__bases__, (tuple, Generic))
+        self.assertEqual(X.__orig_bases__, (NamedTuple, Generic[T]))
+        self.assertEqual(X.__mro__, (X, tuple, Generic, object))
+
+        class Y(Generic[T], NamedTuple):
+            x: T
+        self.assertEqual(Y.__bases__, (Generic, tuple))
+        self.assertEqual(Y.__orig_bases__, (Generic[T], NamedTuple))
+        self.assertEqual(Y.__mro__, (Y, Generic, tuple, object))
+
+        for G in X, Y:
+            with self.subTest(type=G):
+                self.assertEqual(G.__parameters__, (T,))
+                A = G[int]
+                self.assertIs(A.__origin__, G)
+                self.assertEqual(A.__args__, (int,))
+                self.assertEqual(A.__parameters__, ())
+
+                a = A(3)
+                self.assertIs(type(a), G)
+                self.assertEqual(a.x, 3)
+
+                with self.assertRaises(TypeError):
+                    G[int, str]
 
     def test_namedtuple_keyword_usage(self):
         LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
@@ -6023,6 +6073,19 @@ class TypedDictTests(BaseTestCase):
             get_type_hints(Bar),
             {'a': typing.Optional[int], 'b': int}
         )
+
+    def test_non_generic_subscript(self):
+        # For backward compatibility, subscription works
+        # on arbitrary TypedDict types.
+        class TD(TypedDict):
+            a: T
+        A = TD[int]
+        self.assertEqual(A.__origin__, TD)
+        self.assertEqual(A.__parameters__, ())
+        self.assertEqual(A.__args__, (int,))
+        a = A(a = 1)
+        self.assertIs(type(a), dict)
+        self.assertEqual(a, {'a': 1})
 
 
 class RequiredTests(BaseTestCase):
