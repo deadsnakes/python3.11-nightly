@@ -28,7 +28,7 @@ index 9769c5e..2413d4f 100644
  
  
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 7818545..7efa1b5 100644
+index 6b337e8..c25a469 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -2082,8 +2082,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
@@ -53,7 +53,7 @@ index 7818545..7efa1b5 100644
  	-rm -r $(DESTDIR)$(DESTSHARED)/__pycache__
  
 diff --git a/configure.ac b/configure.ac
-index 90255c6..ee5347d 100644
+index 9477056..c1369f7 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -120,7 +120,7 @@ AC_ARG_WITH(
