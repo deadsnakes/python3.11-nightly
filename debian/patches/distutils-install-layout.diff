@@ -331,7 +331,7 @@ index bf926cf..eff6113 100644
  
  def get_preferred_scheme(key):
 diff --git a/Lib/test/test_site.py b/Lib/test/test_site.py
-index 9a148fe..7132936 100644
+index b5dc381..762fcb3 100644
 --- a/Lib/test/test_site.py
 +++ b/Lib/test/test_site.py
 @@ -286,16 +286,16 @@ def test_getsitepackages(self):
