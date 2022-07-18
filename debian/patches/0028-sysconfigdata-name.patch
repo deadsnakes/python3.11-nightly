@@ -53,10 +53,10 @@ index 4c2749b..46ef072 100644
  	-rm -r $(DESTDIR)$(DESTSHARED)/__pycache__
  
 diff --git a/configure.ac b/configure.ac
-index bfdfe6a..4031b27 100644
+index ab6bfb7..fade907 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -120,7 +120,7 @@ AC_ARG_WITH(
+@@ -162,7 +162,7 @@ AC_ARG_WITH(
      dnl Build Python interpreter is used for regeneration and freezing.
      ac_cv_prog_PYTHON_FOR_REGEN=$with_build_python
      PYTHON_FOR_FREEZE="$with_build_python"
