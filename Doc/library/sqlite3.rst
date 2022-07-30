@@ -79,11 +79,11 @@ Now, let us insert three more rows of data,
 using :meth:`~Cursor.executemany`::
 
    >>> data = [
-       ('2006-03-28', 'BUY', 'IBM', 1000, 45.0),
-       ('2006-04-05', 'BUY', 'MSFT', 1000, 72.0),
-       ('2006-04-06', 'SELL', 'IBM', 500, 53.0),
-   ]
-   >>> cur.executemany('INSERT INTO stocks VALUES(?, ?, ?, ?)', data)
+   ...    ('2006-03-28', 'BUY', 'IBM', 1000, 45.0),
+   ...    ('2006-04-05', 'BUY', 'MSFT', 1000, 72.0),
+   ...    ('2006-04-06', 'SELL', 'IBM', 500, 53.0),
+   ... ]
+   >>> cur.executemany('INSERT INTO stocks VALUES(?, ?, ?, ?, ?)', data)
 
 Then, retrieve the data by iterating over the result of a ``SELECT`` statement::
 
@@ -416,6 +416,16 @@ Connection Objects
 
 .. class:: Connection
 
+   Each open SQLite database is represented by a ``Connection`` object,
+   which is created using :func:`sqlite3.connect`.
+   Their main purpose is creating :class:`Cursor` objects,
+   and :ref:`sqlite3-controlling-transactions`.
+
+   .. seealso::
+
+      * :ref:`sqlite3-connection-shortcuts`
+      * :ref:`sqlite3-connection-context-manager`
+
    An SQLite database connection has the following attributes and methods:
 
    .. attribute:: isolation_level
@@ -733,7 +743,14 @@ Connection Objects
       aggregates or whole new virtual table implementations.  One well-known
       extension is the fulltext-search extension distributed with SQLite.
 
-      Loadable extensions are disabled by default. See [#f1]_.
+      .. note::
+
+         The ``sqlite3`` module is not built with loadable extension support by
+         default, because some platforms (notably macOS) have SQLite
+         libraries which are compiled without this feature.
+         To get loadable extension support,
+         you must pass the :option:`--enable-loadable-sqlite-extensions` option
+         to :program:`configure`.
 
       .. audit-event:: sqlite3.enable_load_extension connection,enabled sqlite3.Connection.enable_load_extension
 
@@ -749,8 +766,6 @@ Connection Objects
       Load an SQLite extension from a shared library located at *path*.
       Enable extension loading with :meth:`enable_load_extension` before
       calling this method.
-
-      Loadable extensions are disabled by default. See [#f1]_.
 
       .. audit-event:: sqlite3.load_extension connection,path sqlite3.Connection.load_extension
 
@@ -960,6 +975,22 @@ Connection Objects
 Cursor Objects
 --------------
 
+   A ``Cursor`` object represents a `database cursor`_
+   which is used to execute SQL statements,
+   and manage the context of a fetch operation.
+   Cursors are created using :meth:`Connection.cursor`,
+   or by using any of the :ref:`connection shortcut methods
+   <sqlite3-connection-shortcuts>`.
+
+   Cursor objects are :term:`iterators <iterator>`,
+   meaning that if you :meth:`~Cursor.execute` a ``SELECT`` query,
+   you can simply iterate over the cursor to fetch the resulting rows::
+
+      for row in cur.execute("select * from data"):
+          print(row)
+
+   .. _database cursor: https://en.wikipedia.org/wiki/Cursor_(databases)
+
 .. class:: Cursor
 
    A :class:`Cursor` instance has the following attributes and methods.
@@ -1125,13 +1156,11 @@ Row Objects
 
    A :class:`Row` instance serves as a highly optimized
    :attr:`~Connection.row_factory` for :class:`Connection` objects.
-   It tries to mimic a tuple in most of its features.
+   It tries to mimic a :class:`tuple` in most of its features,
+   and supports iteration, :func:`repr`, equality testing, :func:`len`,
+   and :term:`mapping` access by column name and index.
 
-   It supports mapping access by column name and index, iteration,
-   representation, equality testing and :func:`len`.
-
-   If two :class:`Row` objects have exactly the same columns and their
-   members are equal, they compare equal.
+   Two row objects compare equal if have equal columns and equal members.
 
    .. method:: keys
 
@@ -1623,8 +1652,10 @@ Using :mod:`sqlite3` efficiently
 --------------------------------
 
 
-Using shortcut methods
-^^^^^^^^^^^^^^^^^^^^^^
+.. _sqlite3-connection-shortcuts:
+
+Using connection shortcut methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Using the :meth:`~Connection.execute`,
 :meth:`~Connection.executemany`, and :meth:`~Connection.executescript`
@@ -1673,12 +1704,3 @@ the context manager is a no-op.
    nor closes the connection.
 
 .. literalinclude:: ../includes/sqlite3/ctx_manager.py
-
-
-.. rubric:: Footnotes
-
-.. [#f1] The sqlite3 module is not built with loadable extension support by
-   default, because some platforms (notably macOS) have SQLite
-   libraries which are compiled without this feature. To get loadable
-   extension support, you must pass the
-   :option:`--enable-loadable-sqlite-extensions` option to configure.
