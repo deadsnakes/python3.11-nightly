@@ -849,7 +849,7 @@ argument parsing, the ``"O&"`` converter should be used, passing
    ParseTuple converter: encode :class:`str` objects -- obtained directly or
    through the :class:`os.PathLike` interface -- to :class:`bytes` using
    :c:func:`PyUnicode_EncodeFSDefault`; :class:`bytes` objects are output as-is.
-   *result* must be a :c:type:`PyBytesObject*` which must be released when it is
+   *result* must be a :c:expr:`PyBytesObject*` which must be released when it is
    no longer used.
 
    .. versionadded:: 3.1
@@ -866,7 +866,7 @@ conversion function:
    ParseTuple converter: decode :class:`bytes` objects -- obtained either
    directly or indirectly through the :class:`os.PathLike` interface -- to
    :class:`str` using :c:func:`PyUnicode_DecodeFSDefaultAndSize`; :class:`str`
-   objects are output as-is. *result* must be a :c:type:`PyUnicodeObject*` which
+   objects are output as-is. *result* must be a :c:expr:`PyUnicodeObject*` which
    must be released when it is no longer used.
 
    .. versionadded:: 3.2
