@@ -1,3 +1,9 @@
+python3.11 (3.11.1-100-gf488831576-1+bionic1) bionic; urgency=medium
+
+  * Update to v3.11.1-100-gf488831576 (2023-01-06).
+
+ -- Anthony Sottile (deadsnakes) <asottile+deadsnakes@umich.edu>  Fri, 06 Jan 2023 08:52:08 +0000
+
 python3.11 (3.11.1-97-ga34f0bdcf6-1+bionic1) bionic; urgency=medium
 
   * Update to v3.11.1-97-ga34f0bdcf6 (2023-01-05).
