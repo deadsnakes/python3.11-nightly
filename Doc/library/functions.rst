@@ -1822,7 +1822,7 @@ are always available.  They are listed here in alphabetical order.
 .. class:: type(object)
            type(name, bases, dict, **kwds)
 
-   .. index:: object: type
+   .. index:: pair: object; type
 
    With one argument, return the type of an *object*.  The return value is a
    type object and generally the same object as returned by
@@ -1978,7 +1978,7 @@ are always available.  They are listed here in alphabetical order.
 .. function:: __import__(name, globals=None, locals=None, fromlist=(), level=0)
 
    .. index::
-      statement: import
+      pair: statement; import
       pair: module; builtins
 
    .. note::
