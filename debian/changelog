@@ -1,3 +1,9 @@
+python3.11 (3.11.4-65-g8bb16f6656-1+jammy1) jammy; urgency=medium
+
+  * Update to v3.11.4-65-g8bb16f6656 (2023-06-19).
+
+ -- Anthony Sottile (deadsnakes) <asottile+deadsnakes@umich.edu>  Mon, 19 Jun 2023 08:52:01 +0000
+
 python3.11 (3.11.4-63-g69e2da0292-1+jammy1) jammy; urgency=medium
 
   * Update to v3.11.4-63-g69e2da0292 (2023-06-17).
