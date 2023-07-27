@@ -34,7 +34,7 @@ the definition of all other Python objects.
 
 .. c:type:: PyVarObject
 
-   This is an extension of :c:type:`PyObject` that adds the :attr:`ob_size`
+   This is an extension of :c:type:`PyObject` that adds the :c:member:`~PyVarObject.ob_size`
    field.  This is only used for objects that have some notion of *length*.
    This type does not often appear in the Python/C API.
    Access to the members must be done by using the macros
@@ -171,7 +171,7 @@ the definition of all other Python objects.
 .. c:macro:: PyVarObject_HEAD_INIT(type, size)
 
    This is a macro which expands to initialization values for a new
-   :c:type:`PyVarObject` type, including the :attr:`ob_size` field.
+   :c:type:`PyVarObject` type, including the :c:member:`~PyVarObject.ob_size` field.
    This macro expands to::
 
       _PyObject_EXTRA_INIT
@@ -247,30 +247,32 @@ Implementing functions and methods
    Structure used to describe a method of an extension type.  This structure has
    four fields:
 
-   .. c:member:: const char* ml_name
+   .. c:member:: const char *ml_name
 
-      name of the method
+      Name of the method.
 
    .. c:member:: PyCFunction ml_meth
 
-      pointer to the C implementation
+      Pointer to the C implementation.
 
    .. c:member:: int ml_flags
 
-      flags bits indicating how the call should be constructed
+      Flags bits indicating how the call should be constructed.
 
-   .. c:member:: const char* ml_doc
+   .. c:member:: const char *ml_doc
 
-      points to the contents of the docstring
+      Points to the contents of the docstring.
 
-The :c:member:`ml_meth` is a C function pointer.  The functions may be of different
+The :c:member:`~PyMethodDef.ml_meth` is a C function pointer.
+The functions may be of different
 types, but they always return :c:expr:`PyObject*`.  If the function is not of
 the :c:type:`PyCFunction`, the compiler will require a cast in the method table.
 Even though :c:type:`PyCFunction` defines the first parameter as
 :c:expr:`PyObject*`, it is common that the method implementation uses the
 specific C type of the *self* object.
 
-The :c:member:`ml_flags` field is a bitfield which can include the following flags.
+The :c:member:`~PyMethodDef.ml_flags` field is a bitfield which can include
+the following flags.
 The individual flags indicate either a calling convention or a binding
 convention.
 
