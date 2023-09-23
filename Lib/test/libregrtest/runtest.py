@@ -141,6 +141,11 @@ PROGRESS_MIN_TIME = 30.0   # seconds
 
 SPLITTESTDIRS = {
     "test_asyncio",
+    "test_concurrent_futures",
+    "test_future_stmt",
+    "test_multiprocessing_fork",
+    "test_multiprocessing_forkserver",
+    "test_multiprocessing_spawn",
 }
 
 # Storage of uncollectable objects

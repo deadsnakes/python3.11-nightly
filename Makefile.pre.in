@@ -1962,8 +1962,10 @@ TESTSUBDIRS=	ctypes/test \
 		test/test_asyncio \
 		test/test_capi \
 		test/test_cppext \
+		test/test_dataclasses \
 		test/test_email \
 		test/test_email/data \
+		test/test_future_stmt \
 		test/test_import \
 		test/test_import/data \
 		test/test_import/data/circular_imports \
@@ -2041,6 +2043,7 @@ TESTSUBDIRS=	ctypes/test \
 		test/test_warnings/data \
 		test/test_zoneinfo \
 		test/test_zoneinfo/data \
+		test/tokenizedata \
 		test/tracedmodules \
 		test/typinganndata \
 		test/xmltestdata \
