@@ -9,7 +9,7 @@ Subject: profiled-build
  1 file changed, 10 insertions(+)
 
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 0d0ac13..617d27f 100644
+index ba8e634..1b64bbc 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -639,6 +639,16 @@ build_all_generate_profile:
