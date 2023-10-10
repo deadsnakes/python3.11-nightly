@@ -14,7 +14,7 @@ repos:
         exclude: ^Lib/test/test_tomllib/
       - id: check-yaml
       - id: trailing-whitespace
-        types_or: [c, python, rst]
+        types_or: [c, inc, python, rst]
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
     rev: v0.6.8
@@ -23,3 +23,8 @@ repos:
         args: [--enable=default-role]
         files: ^Doc/|^Misc/NEWS.d/next/
         types: [rst]
+
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
