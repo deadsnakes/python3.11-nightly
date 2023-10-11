@@ -28,10 +28,10 @@ index c591935..24dc67b 100644
  
  
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 4f77c4c..65fa1e1 100644
+index d45e300..00f6f49 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2136,8 +2136,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2137,8 +2137,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
@@ -44,7 +44,7 @@ index 4f77c4c..65fa1e1 100644
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  	if test -d $(DESTDIR)$(LIBDEST)/distutils/tests; then \
  		$(INSTALL_DATA) $(srcdir)/Modules/xxmodule.c \
-@@ -2296,6 +2298,7 @@ sharedinstall: all
+@@ -2297,6 +2299,7 @@ sharedinstall: all
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -53,7 +53,7 @@ index 4f77c4c..65fa1e1 100644
  	-rm -r $(DESTDIR)$(DESTSHARED)/__pycache__
  
 diff --git a/configure.ac b/configure.ac
-index 8aa9498..aa34e1e 100644
+index 8942fa2..cf8789b 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -162,7 +162,7 @@ AC_ARG_WITH(
