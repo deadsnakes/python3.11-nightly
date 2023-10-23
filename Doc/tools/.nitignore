@@ -31,7 +31,6 @@ Doc/howto/urllib2.rst
 Doc/library/__future__.rst
 Doc/library/abc.rst
 Doc/library/ast.rst
-Doc/library/asyncio-dev.rst
 Doc/library/asyncio-eventloop.rst
 Doc/library/asyncio-extending.rst
 Doc/library/asyncio-policy.rst
@@ -144,7 +143,6 @@ Doc/reference/expressions.rst
 Doc/reference/import.rst
 Doc/reference/simple_stmts.rst
 Doc/tutorial/datastructures.rst
-Doc/tutorial/introduction.rst
 Doc/using/windows.rst
 Doc/whatsnew/2.0.rst
 Doc/whatsnew/2.1.rst
