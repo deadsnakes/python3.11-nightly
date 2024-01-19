@@ -2004,9 +2004,9 @@ class POSIXProcessTestCase(BaseTestCase):
 
     @unittest.skipUnless(hasattr(os, 'setreuid'), 'no setreuid on platform')
     def test_user(self):
-        # For code coverage of the user parameter.  We don't care if we get an
-        # EPERM error from it depending on the test execution environment, that
-        # still indicates that it was called.
+        # For code coverage of the user parameter.  We don't care if we get a
+        # permission error from it depending on the test execution environment,
+        # that still indicates that it was called.
 
         uid = os.geteuid()
         test_users = [65534 if uid != 65534 else 65533, uid]
@@ -2030,11 +2030,11 @@ class POSIXProcessTestCase(BaseTestCase):
                                  "import os; print(os.getuid())"],
                                 user=user,
                                 close_fds=close_fds)
-                    except PermissionError:  # (EACCES, EPERM)
-                        pass
-                    except OSError as e:
-                        if e.errno not in (errno.EACCES, errno.EPERM):
-                            raise
+                    except PermissionError as e:  # (EACCES, EPERM)
+                        if e.errno == errno.EACCES:
+                            self.assertEqual(e.filename, sys.executable)
+                        else:
+                            self.assertIsNone(e.filename)
                     else:
                         if isinstance(user, str):
                             user_uid = pwd.getpwnam(user).pw_uid
@@ -2078,8 +2078,8 @@ class POSIXProcessTestCase(BaseTestCase):
                                  "import os; print(os.getgid())"],
                                 group=group,
                                 close_fds=close_fds)
-                    except PermissionError:  # (EACCES, EPERM)
-                        pass
+                    except PermissionError as e:  # (EACCES, EPERM)
+                        self.assertIsNone(e.filename)
                     else:
                         if isinstance(group, str):
                             group_gid = grp.getgrnam(group).gr_gid
@@ -2124,6 +2124,7 @@ class POSIXProcessTestCase(BaseTestCase):
         except OSError as ex:
             if ex.errno != errno.EPERM:
                 raise
+            self.assertIsNone(ex.filename)
             perm_error = True
 
         else:
