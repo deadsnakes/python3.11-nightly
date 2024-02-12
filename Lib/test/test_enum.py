@@ -4443,22 +4443,22 @@ class Color(enum.Enum)
  |      The value of the Enum member.
  |\x20\x20
  |  ----------------------------------------------------------------------
- |  Methods inherited from enum.EnumType:
+ |  Static methods inherited from enum.EnumType:
  |\x20\x20
- |  __contains__(member) from enum.EnumType
+ |  __contains__(member)
  |      Return True if member is a member of this enum
  |      raises TypeError if member is not an enum member
  |\x20\x20\x20\x20\x20\x20
  |      note: in 3.12 TypeError will no longer be raised, and True will also be
  |      returned if member is the value of a member in this enum
  |\x20\x20
- |  __getitem__(name) from enum.EnumType
+ |  __getitem__(name)
  |      Return the member matching `name`.
  |\x20\x20
- |  __iter__() from enum.EnumType
+ |  __iter__()
  |      Return members in definition order.
  |\x20\x20
- |  __len__() from enum.EnumType
+ |  __len__()
  |      Return the number of members (no aliases)
  |\x20\x20
  |  ----------------------------------------------------------------------
@@ -4474,7 +4474,7 @@ expected_help_output_without_docs = """\
 Help on class Color in module %s:
 
 class Color(enum.Enum)
- |  Color(value, names=None, *, module=None, qualname=None, type=None, start=1)
+ |  Color(value, names=None, *, module=None, qualname=None, type=None, start=1, boundary=None)
  |\x20\x20
  |  Method resolution order:
  |      Color
@@ -4483,11 +4483,11 @@ class Color(enum.Enum)
  |\x20\x20
  |  Data and other attributes defined here:
  |\x20\x20
- |  YELLOW = <Color.YELLOW: 3>
+ |  CYAN = <Color.CYAN: 1>
  |\x20\x20
  |  MAGENTA = <Color.MAGENTA: 2>
  |\x20\x20
- |  CYAN = <Color.CYAN: 1>
+ |  YELLOW = <Color.YELLOW: 3>
  |\x20\x20
  |  ----------------------------------------------------------------------
  |  Data descriptors inherited from enum.Enum:
@@ -4497,7 +4497,18 @@ class Color(enum.Enum)
  |  value
  |\x20\x20
  |  ----------------------------------------------------------------------
- |  Data descriptors inherited from enum.EnumType:
+ |  Methods inherited from enum.EnumType:
+ |\x20\x20
+ |  __contains__(member) from enum.EnumType
+ |\x20\x20
+ |  __getitem__(name) from enum.EnumType
+ |\x20\x20
+ |  __iter__() from enum.EnumType
+ |\x20\x20
+ |  __len__() from enum.EnumType
+ |\x20\x20
+ |  ----------------------------------------------------------------------
+ |  Readonly properties inherited from enum.EnumType:
  |\x20\x20
  |  __members__"""
 
